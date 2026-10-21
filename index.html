@@ -844,8 +844,11 @@ function toast(msg, kind='ok'){
 }
 
 // ==== VIEWS ===================================================================
+// Packages are hidden until approved packages exist; the screen (vPackages) is kept for later.
+const FEATURES = { packages:false };
 function tabbar(){
-  const tabs = [['home','home',tx('الرئيسية','Home')],['orders','orders',tx('طلباتي','My orders')],['packages','box',tx('الباقات','Packages')],['account','user',tx('حسابي','Account')]];
+  const tabs = [['home','home',tx('الرئيسية','Home')],['orders','orders',tx('طلباتي','My orders')],
+    ...(FEATURES.packages ? [['packages','box',tx('الباقات','Packages')]] : []),['account','user',tx('حسابي','Account')]];
   return `<nav class="tabbar glass" aria-label="${tx('التنقل الرئيسي','Main navigation')}">${tabs.map(([id,ic,l]) =>
     `<button data-a="tab" data-v="${id}" class="${S.tab===id&&S.view==='tab'?'on':''}" aria-current="${S.tab===id?'page':'false'}">${I(ic,23)}<span>${l}</span></button>`).join('')}</nav>`;
 }
@@ -1289,13 +1292,21 @@ function vSuccess(){
 }
 
 // ---- Order detail ------------------------------------------------------------------
+// Payment-success supporting copy depends on the order stage at the time it is shown.
+function paidCopy(o){
+  if (o.status >= DELIVERED) return tx('وصلت النظافة لبابك، شكرًا لاختيارك ذا كلينر.','Clean clothes, delivered to your door. Thanks for choosing The Cleaner.');
+  if (o.status === OUT_FOR_DELIVERY) return tx('طلبك بالطريق، تابع حالة التوصيل من هنا.','Your order is on its way — follow the delivery here.');
+  if (o.status === 3) return tx('طلبك جاهز، وبنعلمك أول ما يطلع للتوصيل.','Your order is ready, and we’ll let you know as soon as it’s out for delivery.');
+  return tx('تابع مراحل طلبك من هنا، وبنعلمك أول ما تجهز.','Follow your order here, and we’ll let you know as soon as it’s ready.');
+}
+const paidCard = o => `<div class="state-card paid" id="paid-card">${I('check',26)}<h2>${tx('تم الدفع، يعطيك العافية','Payment done — thank you')}</h2>
+    <p id="paid-copy">${paidCopy(o)}</p></div>`;
 function stateCard(o){
-  if (o.status >= DELIVERED) return `<div class="state-card paid">${I('heart',26)}<h2>${tx('وصلت النظافة لبابك','Clean clothes, delivered to your door')}</h2>
+  if (o.status >= DELIVERED) return (o.payment === 'paid' ? paidCard(o) + '<div style="height:12px"></div>' : '') + `<div class="state-card paid" id="delivered-card">${I('heart',26)}<h2>${tx('وصلت النظافة لبابك','Clean clothes, delivered to your door')}</h2>
     <p>${tx('نتمنى تكون تجربتك على قدّ توقعاتك. كيف كانت؟','We hope it lived up to your expectations. How was it?')}</p>
     ${o.rating ? `<div class="row small" style="margin-top:12px;gap:4px;color:#B37400">${I('star',16)} ${tx(`قيّمت تجربتك بـ ${o.rating} من 5`,`You rated it ${o.rating} of 5`)}</div>`
       : `<button class="btn" data-a="rate" data-v="${o.id}" style="margin-top:14px">${tx('قيّم تجربتك','Rate your experience')}</button>`}</div>`;
-  if (o.payment === 'paid') return `<div class="state-card paid" id="paid-card">${I('check',26)}<h2>${tx('تم الدفع، يعطيك العافية','Payment done — thank you')}</h2>
-    <p>${tx('تابع مراحل طلبك من هنا، وبنعلمك أول ما تجهز.','Follow your order here, and we’ll let you know as soon as it’s ready.')}</p></div>`;
+  if (o.payment === 'paid') return paidCard(o);
   if (o.bill) return `<div class="state-card" id="collected-card">${I('bag',26)}<h2>${tx('استلمنا كيسك، وبدأت العناية','We’ve got your bag — the care has started')}</h2>
     <p>${tx('سجّلنا قطعك، وتفاصيل المبلغ جاهزة. تقدر تدفع الآن بـ Apple Pay أو إحدى طرق الدفع المتاحة.','We’ve recorded your items and the bill is ready. You can pay now with Apple Pay or another available method.')}</p>
     <div class="note warn" style="margin-top:12px">${I('info',18)}<span>${tx('يُرجى إتمام الدفع قبل خروج طلبك للتوصيل.','Please complete payment before your order goes out for delivery.')}</span></div></div>`;
@@ -1399,7 +1410,7 @@ function shPay(){
     <div style="text-align:center;padding:10px 0 4px" id="pay-success">
       <div class="done-ring"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
       <h2 style="font-size:21px;margin:18px 0 6px">${tx('تم الدفع، يعطيك العافية','Payment done — thank you')}</h2>
-      <p class="sub" style="margin:0 auto 12px;max-width:300px">${tx('تابع مراحل طلبك من هنا، وبنعلمك أول ما تجهز.','Follow your order here, and we’ll let you know as soon as it’s ready.')}</p>
+      <p class="sub" id="pay-success-copy" style="margin:0 auto 12px;max-width:300px">${paidCopy(o)}</p>
       <div class="card tint small" style="text-align:start"><div class="kv"><span class="muted">${tx('الطلب','Order')}</span><span>${esc(o.id)}</span></div>
         <div class="kv"><span class="muted">${tx('المبلغ المدفوع','Amount paid')}</span><span>${money(o.bill.total)}</span></div>
         <div class="kv"><span class="muted">${tx('الطريقة','Method')}</span><span>${P_.method==='apple'?'Apple Pay':tx('بطاقة','Card')} (${tx('محاكاة','simulated')})</span></div></div>
@@ -1487,6 +1498,7 @@ function render(){
   if (sc && T.lastKey) T.scrollMem[T.lastKey] = sc.scrollTop;
   const app = document.getElementById('app');
   const views = { book:vBook, success:vSuccess, order:vOrder, prices:vPrices, invoices:vInvoices, invoice:vInvoice };
+  if (S.view === 'tab' && S.tab === 'packages' && !FEATURES.packages) S.tab = 'home';
   app.innerHTML = S.view === 'tab' ? ({home:vHome, orders:vOrders, packages:vPackages, account:vAccount}[S.tab])() : views[S.view]();
   const scr = app.firstElementChild;
   if (!same && T.lastKey) scr.classList.add(S.view === 'tab' && T.lastKey.startsWith('tab:') ? 'enter-u' : T.navDir === 'b' ? 'enter-b' : 'enter-f');
@@ -1622,7 +1634,7 @@ function confirmPay(){
 
 // ==== ACTIONS ======================================================================
 const A = {
-  tab(v){ S.view = 'tab'; S.tab = v; render() },
+  tab(v){ if (v === 'packages' && !FEATURES.packages) v = 'home'; S.view = 'tab'; S.tab = v; render() },
   seg(v){ S.ordersSeg = v; render() },
   invSeg(v){ S.invSeg = v; render() },
   lang(){ S.lang = ar() ? 'en' : 'ar'; T.lastKey = ''; render(); toast(tx('تم التبديل إلى العربية','Switched to English')) },
