@@ -5,29 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%231458F0%27/%3E%3Cpath d=%27M16 7s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11z%27 fill=%27none%27 stroke=%27white%27 stroke-width=%272.2%27/%3E%3C/svg%3E">
 <title>ذا كلينر — The Cleaner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* Layout concept: white app canvas, one blue hero on Home, glass used only for floating chrome
-   (tab bar, action bars, headers, sheets, hero pills). Forms, cards and bills stay solid for legibility. */
+/* Layout concept: white app canvas, one blue hero on Home, glass only on floating chrome
+   (capsule nav, action bars, headers, sheets, hero pills). Forms, cards and bills stay solid. */
 :root{
   --blue:#1458F0;--blue-d:#0B42C4;--blue-50:#EEF3FF;--blue-100:#DDE7FF;--blue-200:#BFD3FF;
   --ink:#0B1630;--ink-2:#36435E;--muted:#5D6B86;--line:#E3E9F3;--surface:#F4F7FC;--bg:#FFFFFF;
   --ok:#0E8A44;--ok-50:#E6F6ED;--warn:#8A5700;--warn-50:#FFF4DE;--err:#C42F39;--err-50:#FDECEE;
   --demo-line:#E0B45C;--demo-bg:#FFFBF2;
-  /* Liquid Glass tokens — replaced by opaque values in the fallbacks below */
   --glass:rgba(255,255,255,.62);--glass-strong:rgba(255,255,255,.86);--glass-line:rgba(255,255,255,.8);
   --glass-edge:rgba(11,22,48,.09);--glass-shadow:0 12px 32px rgba(16,38,92,.14),0 1px 3px rgba(16,38,92,.08);
   --glass-tint:rgba(20,88,240,.12);--blur:blur(22px) saturate(180%);
   --scrim:rgba(11,22,48,.28);
   --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);
   --font:'IBM Plex Sans Arabic',system-ui,-apple-system,'Segoe UI',sans-serif;
-  --ease:cubic-bezier(.2,.8,.2,1);--dx:1;
+  --ease:cubic-bezier(.2,.8,.2,1);--spring:cubic-bezier(.3,1.25,.5,1);--dx:1;
 }
 [dir=rtl]{--dx:-1}
-/* Opaque fallbacks: no backdrop-filter support, OS "Reduce transparency", or the prototype toggle */
 @supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
   :root{--glass:#FFFFFF;--glass-strong:#FFFFFF;--glass-line:#E3E9F3;--scrim:rgba(11,22,48,.45)}
 }
@@ -41,11 +40,13 @@ html.solid .glass,html.solid .overlay{-webkit-backdrop-filter:none;backdrop-filt
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);overflow:hidden;-webkit-text-size-adjust:100%}
 button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;text-align:inherit}
+a{color:inherit;text-decoration:none}
 input,textarea,select{font:inherit;font-size:16px;color:var(--ink)}
 svg{flex-shrink:0}
 :focus-visible{outline:2.5px solid var(--blue);outline-offset:2px}
 [dir=rtl] .flip{transform:scaleX(-1)}
 .num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 .glass{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
   border:1px solid var(--glass-line);box-shadow:var(--glass-shadow),inset 0 1px 0 rgba(255,255,255,.85),inset 0 0 0 .5px var(--glass-edge)}
@@ -78,9 +79,11 @@ html.sim.se .sbar .island,html.sim.se .hbar{display:none}
 .enter-f{animation:enterF .3s var(--ease)}
 .enter-b{animation:enterB .3s var(--ease)}
 .enter-u{animation:fadeUp .3s ease-out}
+.enter-up{animation:enterUp .42s var(--ease)}
 @keyframes enterF{from{opacity:0;transform:translateX(calc(24px * var(--dx)))}}
 @keyframes enterB{from{opacity:0;transform:translateX(calc(-24px * var(--dx)))}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}}
+@keyframes enterUp{from{opacity:.4;transform:translateY(70%)}}
 .scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:none}
 .scroll::-webkit-scrollbar,.sheet-b::-webkit-scrollbar,.hscroll::-webkit-scrollbar{display:none}
 .pad{padding:0 16px}
@@ -102,17 +105,20 @@ html.sim.se .sbar .island,html.sim.se .hbar{display:none}
 
 /* ---------- buttons ---------- */
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:54px;border-radius:18px;background:var(--blue);color:#fff;font-weight:600;font-size:16px;padding:0 20px;
-  box-shadow:0 6px 16px rgba(20,88,240,.28),inset 0 1px 0 rgba(255,255,255,.22);transition:transform .15s var(--ease),background .2s,opacity .2s}
+  box-shadow:0 6px 16px rgba(20,88,240,.28),inset 0 1px 0 rgba(255,255,255,.22);transition:transform .15s var(--ease),background .2s,opacity .2s;text-align:center}
 .btn:active{transform:scale(.97);background:var(--blue-d)}
-.btn[disabled]{opacity:.55;pointer-events:none}
+.btn[disabled],.btn[aria-disabled=true]{opacity:.5;pointer-events:none}
 .btn.sec{background:var(--blue-50);color:var(--blue);box-shadow:none}
 .btn.line{background:var(--bg);color:var(--ink);border:1.5px solid var(--line);box-shadow:none}
 .btn.sm{min-height:44px;width:auto;font-size:14.5px;border-radius:14px;padding:0 16px}
 .btn.demo{background:#fff;color:var(--warn);border:1.5px solid var(--demo-line);box-shadow:none;min-height:46px;font-size:14.5px}
+.btn.wa{background:#128C4B;box-shadow:0 6px 16px rgba(18,140,75,.25)}
+.btn.wa:active{background:#0D6E3A}
 .link{color:var(--blue);font-weight:600;font-size:14px;min-height:44px;display:inline-flex;align-items:center;gap:4px;padding:0 4px}
 .circle{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--ink);transition:transform .15s var(--ease)}
 .circle:active{transform:scale(.92)}
 .spin{width:20px;height:20px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+.spin.dark{border-color:rgba(20,88,240,.25);border-top-color:var(--blue)}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ---------- generic ---------- */
@@ -139,8 +145,30 @@ html.sim.se .sbar .island,html.sim.se .hbar{display:none}
 .demo-box h3{font-size:13px;color:var(--warn);margin:0 0 4px;display:flex;gap:6px;align-items:center}
 .demo-box p{margin:0 0 10px;font-size:12.5px;color:#6B4A00;line-height:1.55}
 
+/* ---------- 3D service art ---------- */
+.art3d{display:block;width:100%;height:100%}
+.art{position:relative;border-radius:18px;background:linear-gradient(150deg,#F3F7FF,#E1EAFE);display:grid;place-items:center;overflow:hidden}
+.art::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -10px 24px rgba(20,88,240,.06)}
+
+/* ---------- auth ---------- */
+.auth{flex:1;display:flex;flex-direction:column;min-height:0;position:relative}
+.auth .scroll{padding:calc(var(--sat) + 12px) 20px 24px}
+.auth-top{display:flex;align-items:center;gap:8px;min-height:48px}
+.auth-hero{position:relative;height:230px;margin:6px -4px 8px}
+.auth-hero .a{position:absolute;width:118px;height:118px;filter:drop-shadow(0 14px 22px rgba(20,88,240,.18));animation:float 6s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-6px)}}
+.brandmark{display:flex;align-items:center;gap:10px}
+.logo{width:40px;height:40px;border-radius:13px;background:linear-gradient(150deg,#2E6BFF,#0B42C4);color:#fff;display:grid;place-items:center;box-shadow:0 6px 14px rgba(20,88,240,.3)}
+.auth-foot{padding:12px 20px calc(var(--sab) + 16px)}
+.phone-field{display:flex;align-items:stretch;gap:8px;direction:ltr}
+.phone-field .cc{display:flex;align-items:center;gap:6px;padding:0 14px;border-radius:16px;background:var(--surface);font-weight:600;min-height:56px}
+.phone-field input{flex:1;min-width:0;text-align:left;font-size:19px;letter-spacing:.5px}
+.otp{direction:ltr;text-align:center;font-size:30px;letter-spacing:14px;font-weight:700;padding-inline-start:28px}
+.demo-code{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;border:1.5px dashed var(--demo-line);background:var(--demo-bg);color:#5E3D00;font-size:13.5px;line-height:1.55}
+.demo-code b{font-size:20px;letter-spacing:4px;color:var(--ink);direction:ltr;unicode-bidi:isolate}
+
 /* ---------- Home ---------- */
-.hero{position:relative;color:#fff;background:linear-gradient(160deg,#0D44D6 0%,#1458F0 55%,#3B7BFF 100%);padding:calc(var(--sat) + 10px) 16px 52px;overflow:hidden;isolation:isolate}
+.hero{position:relative;color:#fff;background:linear-gradient(160deg,#0D44D6 0%,#1458F0 55%,#3B7BFF 100%);padding:calc(var(--sat) + 10px) 16px 50px;overflow:hidden;isolation:isolate}
 .hero-art{position:absolute;inset:0;width:100%;height:100%;z-index:-1}
 [dir=ltr] .hero-art{transform:scaleX(-1)}
 .hero-top{display:flex;align-items:center;gap:8px}
@@ -149,16 +177,14 @@ html.sim.se .sbar .island,html.sim.se .hbar{display:none}
 .pill:active{transform:scale(.97)}
 .pill .dot{width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center}
 .pill .txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hero-copy{margin-top:26px;max-width:min(310px,66%)}
-[dir=ltr] .hero-copy{max-width:58%}
-.brandline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.brandline b{font-size:15px}
-.hero-copy h1{font-size:28px;line-height:1.3;margin:12px 0 8px;font-weight:700;text-wrap:balance}
+.hero-copy{margin-top:24px;max-width:min(320px,70%)}
+.hero-copy h1{font-size:27px;line-height:1.35;margin:10px 0 6px;font-weight:700;text-wrap:balance}
 [dir=ltr] .hero-copy h1{font-size:25px}
-.hero-copy p{margin:0 0 18px;font-size:14.5px;opacity:.94;line-height:1.65}
+.hero-copy p{margin:0 0 18px;font-size:15.5px;opacity:.95;line-height:1.6}
 .hero .demo{font-size:12px;font-weight:600;color:var(--warn);padding:5px 12px;min-height:30px;border-radius:999px;display:inline-flex;align-items:center}
 .hero-cta{display:inline-flex;align-items:center;gap:8px;min-height:50px;padding:0 22px;border-radius:999px;color:var(--blue);font-weight:700;font-size:15.5px;transition:transform .15s var(--ease)}
 .hero-cta:active{transform:scale(.97)}
+.hero-3d{position:absolute;inset-inline-end:-6px;bottom:30px;width:150px;height:150px;opacity:.98;filter:drop-shadow(0 18px 24px rgba(4,20,70,.35));pointer-events:none}
 .main-sheet{position:relative;margin-top:-28px;background:var(--bg);border-radius:28px 28px 0 0;padding:22px 16px 0}
 .sec-h{display:flex;align-items:center;justify-content:space-between;margin:26px 0 12px}
 .sec-h:first-child{margin-top:4px}
@@ -166,12 +192,8 @@ html.sim.se .sbar .island,html.sim.se .hbar{display:none}
 .svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .svc-card{display:flex;flex-direction:column;width:100%;padding:10px;border-radius:24px;border:1px solid var(--line);background:var(--bg);box-shadow:0 2px 10px rgba(16,38,92,.05);transition:transform .15s var(--ease);text-align:start}
 .svc-card:active{transform:scale(.98)}
-.art{position:relative;border-radius:18px;background:linear-gradient(145deg,var(--blue-50),var(--blue-100));color:var(--blue);display:grid;place-items:center;overflow:hidden}
-.art::before,.art::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.7)}
-.art::before{width:38%;aspect-ratio:1;inset-inline-end:-8%;top:-12%}
-.art::after{width:18%;aspect-ratio:1;inset-inline-start:10%;bottom:10%;background:rgba(255,255,255,.55)}
-.art svg{position:relative;z-index:1}
-.svc-card .art{height:84px}
+.svc-card .art{height:96px}
+.svc-card .art svg{width:86px;height:86px}
 .svc-t{font-weight:700;font-size:15px;line-height:1.35}
 .svc-d{color:var(--muted);font-size:12.5px;line-height:1.5;margin-top:3px}
 .svc-card .body{padding:10px 4px 2px;display:flex;flex-direction:column;gap:4px;flex:1}
@@ -191,13 +213,22 @@ html.sim.se .sbar .island,html.sim.se .hbar{display:none}
 .mini-prog i.on{background:#7FA6FF}
 .resume{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:20px;background:var(--blue-50);width:100%;min-height:58px;margin-bottom:12px}
 
-/* floating glass tab bar */
-.tabbar{position:absolute;inset-inline:14px;bottom:calc(var(--sab) + 10px);display:flex;gap:2px;padding:6px;border-radius:32px;z-index:30;animation:barIn .4s var(--ease)}
+/* ---------- floating capsule navigation + separate create button ---------- */
+.navwrap{position:absolute;inset-inline:16px;bottom:calc(var(--sab) + 12px);display:flex;align-items:center;justify-content:center;gap:10px;z-index:30;animation:barIn .4s var(--ease)}
 @keyframes barIn{from{transform:translateY(20px);opacity:0}}
-.tabbar button{flex:1;min-height:54px;border-radius:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11.5px;font-weight:500;color:var(--ink-2);transition:background .25s,color .25s}
-.tabbar button.on{background:var(--glass-tint);color:var(--blue);font-weight:700}
-.tabbar button.on svg{animation:pop .3s}
-@keyframes pop{50%{transform:scale(1.14)}}
+.capsule{position:relative;flex:1 1 auto;max-width:292px;display:grid;grid-template-columns:repeat(3,1fr);padding:5px;border-radius:999px;min-height:64px}
+.ind{position:absolute;top:5px;bottom:5px;inset-inline-start:5px;width:calc((100% - 10px) / 3);border-radius:999px;background:#fff;
+  box-shadow:0 2px 10px rgba(16,38,92,.14),inset 0 0 0 .5px rgba(11,22,48,.06);transform:translateX(calc(var(--i,0) * 100% * var(--dx)));transition:transform .42s var(--spring)}
+html.solid .ind{background:var(--blue-50);box-shadow:none}
+.nb{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border-radius:999px;color:var(--muted);font-size:11px;font-weight:600;min-height:54px;transition:color .25s}
+.nb svg{transition:transform .2s var(--ease)}
+.nb:active svg{transform:scale(.86)}
+.nb.on{color:var(--blue)}
+.plus{width:64px;height:64px;border-radius:50%;flex-shrink:0;background:linear-gradient(150deg,#3274FF,#1458F0 55%,#0B42C4);color:#fff;display:grid;place-items:center;
+  box-shadow:0 10px 24px rgba(20,88,240,.38),inset 0 1px 0 rgba(255,255,255,.35);transition:transform .25s var(--spring)}
+.plus svg{transition:transform .3s var(--spring)}
+.plus:active{transform:scale(.9)}
+.plus:active svg{transform:rotate(90deg)}
 
 /* ---------- headers / bars ---------- */
 .bk-head{position:absolute;top:0;inset-inline:0;z-index:25;padding:calc(var(--sat) + 8px) 12px 10px;border-radius:0 0 22px 22px;border-top:0;display:flex;align-items:center;gap:10px}
@@ -213,14 +244,14 @@ html.sim.se .sbar .island,html.sim.se .hbar{display:none}
 .fbar .est{flex:1;min-width:0;padding-inline-start:12px}
 .fbar .est .l{font-size:12px;color:var(--muted);white-space:nowrap}
 .fbar .est .v{font-weight:600;font-size:13.5px;line-height:1.35;color:var(--ink-2)}
-.fbar .est .v.amt{font-weight:700;font-size:16px;color:var(--ink)}
 .fbar .btn{width:auto;min-width:132px;border-radius:24px;min-height:52px}
 .fbar.full .btn{flex:1}
 
 /* ---------- booking ---------- */
-.choice{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border-radius:22px;border:1.5px solid var(--line);background:var(--bg);transition:border-color .2s,background .2s;text-align:start}
+.choice{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:22px;border:1.5px solid var(--line);background:var(--bg);transition:border-color .2s,background .2s;text-align:start}
 .choice.on{border-color:var(--blue);background:var(--blue-50)}
-.choice .art{width:52px;height:52px;flex-shrink:0;border-radius:16px}
+.choice .art{width:60px;height:60px;flex-shrink:0;border-radius:16px}
+.choice .art svg{width:54px;height:54px}
 .check{width:26px;height:26px;border-radius:9px;border:2px solid var(--line);display:grid;place-items:center;color:#fff;transition:all .2s;background:var(--bg);flex-shrink:0}
 .on>.check,.on .check{background:var(--blue);border-color:var(--blue)}
 .radio{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;transition:all .2s;flex-shrink:0;background:#fff}
@@ -269,6 +300,7 @@ html.sim.se .sbar .island,html.sim.se .hbar{display:none}
 .achip.on{border-color:var(--blue);background:var(--blue-50)}
 .achip b{font-size:14px}.achip span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .achip.add{border-style:dashed;border-color:#B9C8E2;color:var(--blue);align-items:center;justify-content:center;font-weight:600;font-size:13.5px}
+.empty-addr{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:22px 16px;border:1.5px dashed #B9C8E2;border-radius:20px;background:var(--surface)}
 .cal{border-radius:22px;background:var(--surface);padding:14px 12px 12px}
 .cal .mon{font-weight:700;color:var(--blue);font-size:15px;padding:0 4px 8px}
 .days{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity;margin:0 -12px;padding:2px 12px}
@@ -302,6 +334,7 @@ html.sim.se .sbar .island,html.sim.se .hbar{display:none}
 .state-card p{margin:0;color:var(--ink-2);font-size:14px;line-height:1.65}
 .state-card.paid{background:linear-gradient(140deg,#E9F7EF,#F7FCF9);border-color:#CDEBDA}
 .status-line{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.help-btn{display:flex;align-items:center;gap:10px;width:100%;min-height:56px;padding:0 16px;border-radius:20px;background:var(--blue-50);color:var(--blue);font-weight:700;font-size:15px;margin-top:12px}
 .stars{display:flex;gap:6px;justify-content:center;margin:8px 0 4px}
 .stars button{width:46px;height:46px;display:grid;place-items:center;color:#C9D2E2;border-radius:12px}
 .stars button.on{color:#F5A623}
@@ -335,6 +368,20 @@ html.sim.se .sbar .island,html.sim.se .hbar{display:none}
 .pl-row .pr{font-weight:700;white-space:nowrap}
 .pl-row .pr.assess{color:var(--warn);font-weight:600;font-size:13px}
 
+/* wallet */
+.wallet-card{position:relative;overflow:hidden;border-radius:26px;padding:20px;color:#fff;background:linear-gradient(150deg,#2E6BFF,#1458F0 50%,#0B3CB5);box-shadow:0 16px 32px rgba(20,88,240,.28)}
+.wallet-card::after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;inset-inline-end:-80px;top:-110px;background:rgba(255,255,255,.12)}
+.wallet-card .bal{font-size:34px;font-weight:700;margin:4px 0 14px;font-variant-numeric:tabular-nums}
+.wallet-card .split{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.wallet-card .split div{background:rgba(255,255,255,.14);border-radius:16px;padding:10px 12px;font-size:12.5px}
+.wallet-card .split b{display:block;font-size:16px;margin-top:2px}
+.tx{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.tx:last-child{border-bottom:0}
+.tx .amt{font-weight:700;white-space:nowrap}
+.tx .amt.pos{color:var(--ok)}
+.tx.failed{opacity:.7}
+.offer{border-radius:20px;padding:14px;border:1.5px solid #CDEBDA;background:linear-gradient(140deg,#E9F7EF,#F7FCF9)}
+
 /* payment */
 .method{display:flex;align-items:center;gap:12px;width:100%;padding:14px;border-radius:18px;border:1.5px solid var(--line);background:#fff;text-align:start;min-height:64px}
 .method.on{border-color:var(--blue);background:var(--blue-50)}
@@ -357,7 +404,6 @@ html.sim.se .sbar .island,html.sim.se .hbar{display:none}
 .tl-i.done .tl-dot{background:var(--blue);border-color:var(--blue)}
 .tl-i.cur .tl-dot{border-color:var(--blue);box-shadow:0 0 0 5px var(--blue-50)}
 .tl-i.cur .tl-dot::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--blue);animation:pulse 1.6s infinite}
-.tl-i.locked .tl-t::after{content:" 🔒";font-size:12px}
 @keyframes pulse{50%{transform:scale(.6);opacity:.6}}
 .tl-t{font-weight:600;font-size:15px;line-height:1.4}
 .tl-i:not(.done):not(.cur) .tl-t{color:var(--muted);font-weight:500}
@@ -366,7 +412,7 @@ html.sim.se .sbar .island,html.sim.se .hbar{display:none}
 .empty .ico{margin:0 auto 14px;width:76px;height:76px;border-radius:26px}
 .empty b{display:block;font-size:17px;margin-bottom:6px}
 .list{border:1px solid var(--line);border-radius:22px;overflow:hidden}
-.list>button{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;min-height:58px;border-bottom:1px solid var(--line);background:var(--bg)}
+.list>button,.list>a,.list>div.li{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;min-height:58px;border-bottom:1px solid var(--line);background:var(--bg)}
 .list>*:last-child{border-bottom:0}
 .li-ico{width:36px;height:36px;border-radius:12px;background:var(--surface);display:grid;place-items:center;color:var(--ink-2)}
 .seg-wrap{padding:0 16px}
@@ -383,8 +429,11 @@ html.sim.se .sbar .island,html.sim.se .hbar{display:none}
 .sheet-h .circle{margin-top:10px;background:rgba(11,22,48,.06)}
 .sheet-h .circle[disabled]{opacity:.35;pointer-events:none}
 .sheet-b{overflow-y:auto;overflow-x:hidden;padding:8px 18px 16px;flex:1;min-height:0;overscroll-behavior:contain;scrollbar-width:none}
-.sheet-f{padding:10px 14px 14px}
+.sheet-f{padding:10px 14px 14px;display:flex;flex-direction:column;gap:8px}
 .sheet.demo-sheet{background:#FFFDF8}
+.reason{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:16px;border:1.5px solid var(--line);background:#fff;text-align:start;min-height:52px;font-weight:500}
+.reason.on{border-color:var(--blue);background:var(--blue-50);color:var(--ink)}
+.msg-preview{white-space:pre-wrap;font-size:13px;line-height:1.6;background:var(--surface);border-radius:14px;padding:10px 12px;color:var(--ink-2)}
 
 /* toast */
 #toast{position:absolute;inset-inline:16px;top:calc(var(--sat) + 10px);z-index:80;pointer-events:none;display:flex;flex-direction:column;gap:8px;align-items:center}
@@ -395,10 +444,23 @@ html.solid .t-msg{background:#0B1630}
 @keyframes tIn{from{transform:translateY(-16px);opacity:0}}
 @keyframes tOut{to{transform:translateY(-16px);opacity:0}}
 
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
+<!-- Shared gradients for the 3D service art (kept rendered, 0×0, so url(#…) references work everywhere). -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="g3-blue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6E9DFF"/><stop offset="1" stop-color="#1458F0"/></linearGradient>
+    <linearGradient id="g3-blue-d" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2D63E6"/><stop offset="1" stop-color="#0A3BAE"/></linearGradient>
+    <linearGradient id="g3-white" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#DCE6FA"/></linearGradient>
+    <linearGradient id="g3-white-s" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E8EFFC"/><stop offset="1" stop-color="#BFD0EE"/></linearGradient>
+    <linearGradient id="g3-silver" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6F8FB"/><stop offset="1" stop-color="#A9B6CB"/></linearGradient>
+    <linearGradient id="g3-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFE0FF"/><stop offset="1" stop-color="#8DB3FF"/></linearGradient>
+    <radialGradient id="g3-shadow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#0B1630" stop-opacity=".28"/><stop offset="1" stop-color="#0B1630" stop-opacity="0"/></radialGradient>
+    <radialGradient id="g3-bubble" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".45" stop-color="#D6E4FF"/><stop offset="1" stop-color="#7EA6FF"/></radialGradient>
+  </defs>
+</svg>
 <div id="device">
   <div class="sbar" id="sbar"><span>9:41</span><span class="island"></span><svg width="26" height="12" viewBox="0 0 26 12" aria-hidden="true"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".45"/><rect x="2" y="2" width="17" height="8" rx="1.5" fill="currentColor"/><rect x="23.5" y="4" width="1.8" height="4" rx=".8" fill="currentColor" opacity=".45"/></svg></div>
   <div id="app"></div>
@@ -409,14 +471,22 @@ html.solid .t-msg{background:#0B1630}
 <script>
 'use strict';
 /* =========================================================================
-   The Cleaner — ذا كلينر · interactive prototype (v1.4)
-   Operating model: book → leave bag at the door → driver counts & records items →
-   bill calculated from the price list → customer pays before out-for-delivery.
-   MOCK ONLY: nothing is sent to CleanCloud, Wafeq or a payment gateway.
+   The Cleaner — ذا كلينر · interactive prototype (v2.0)
+   Welcome → phone → simulated OTP → name (new customers) → Home.
+   Book → bag at the door → driver records items → catalogue bill → pay before dispatch.
+   MOCK ONLY: no CleanCloud, Wafeq, SMS, payment gateway or real wallet.
    ========================================================================= */
 
-const STORE_KEY = 'thecleaner-proto-v3';
-const OLD_KEYS = ['thecleaner-proto-v2'];
+// ---- Central configuration ---------------------------------------------------
+// Real support contacts have NOT been provided. Leave empty until approved values exist;
+// empty channels are hidden and an honest empty state is shown.
+const SUPPORT = { whatsapp:'', email:'' };   // whatsapp: digits incl. country code, e.g. "9665XXXXXXXX"
+const FEATURES = { packages:false };         // packages hidden until approved packages exist (vPackages kept)
+const WALLET_CFG = { topups:[5000, 10000, 20000], min:1000, max:200000, comp:[1000, 2500, 5000] }; // halalas
+
+const DEVICE_KEY = 'thecleaner-proto-v5:device';
+const USER_PREFIX = 'thecleaner-proto-v5:user:';
+const V3_KEY = 'thecleaner-proto-v3';
 
 // ---- Price catalogue (as supplied by The Cleaner; SAR) ----------------------
 // Format per line:  English | Arabic | price [| assess]
@@ -575,7 +645,6 @@ Small Duvet | لحاف صغير | 30.50
 `;
 const EXPECTED_COUNTS = { wi:46, ir:36, dc:33, sh:10, rg:2, hh:16 }; // total 143
 
-// Service categories (approved) — booking selects these; no garment quantities.
 const CATS = [
   { id:'wi', icon:'shirt',  ar:'غسيل وكوي', en:'Wash & Iron', dAr:'ثيابك وملابسك اليومية', dEn:'Thobes and everyday clothes' },
   { id:'ir', icon:'iron',   ar:'كوي', en:'Ironing Only', dAr:'للملابس النظيفة اللي تحتاج كي', dEn:'Clean clothes that just need pressing' },
@@ -606,19 +675,12 @@ function catalogueCheck(){
   const ok = Object.entries(EXPECTED_COUNTS).every(([k,v]) => counts[k] === v) && CATALOGUE.length === 143;
   return { ok, counts, total: CATALOGUE.length, assess: CATALOGUE.filter(i => i.assess).length };
 }
-
-// Pricing configuration — pending business confirmation. Nothing is added silently.
-const PRICING = {
-  deliveryFee: null,          // not configured → shown as "not set", not added
-  vatRate: 0.15,              // used only if a VAT mode other than "pending" is chosen in demo settings
-};
+const PRICING = { deliveryFee:null, vatRate:0.15 };   // VAT undecided: default mode "pending" adds/removes nothing
 const TAX_MODES = [
   { v:'pending',   ar:'قيد التأكيد', en:'Pending confirmation' },
   { v:'inclusive', ar:'شاملة الضريبة', en:'Prices include VAT' },
   { v:'exclusive', ar:'تُضاف الضريبة', en:'VAT added on top' }
 ];
-
-// Care preferences mirror CleanCloud customer preference fields.
 const PREFS = {
   shirts: [ {v:'hanger', cc:1, ar:'على علّاقة', en:'On hanger'}, {v:'folded', cc:3, ar:'مطوية', en:'Folded'} ],
   scent: [ {v:'none', cc:1, ar:'بدون عطر', en:'Unscented'}, {v:'light', cc:2, ar:'خفيف', en:'Light'},
@@ -636,17 +698,24 @@ const REPEAT = [
   {v:'w2', ar:'كل أسبوعين', en:'Every 2 weeks'}, {v:'w4', ar:'كل 4 أسابيع', en:'Every 4 weeks'}
 ];
 const SLOT_DEF = [[9,11],[11,13],[16,18],[18,20],[20,22]];
-// Order progress (separate from payment status)
 const STEPS = [
-  {ar:'تم الحجز', en:'Booked'},
-  {ar:'تم الاستلام', en:'Collected'},
-  {ar:'قيد التنظيف', en:'Cleaning'},
-  {ar:'جاهز', en:'Ready'},
-  {ar:'خرج للتوصيل', en:'Out for delivery'},
-  {ar:'تم التسليم', en:'Delivered'}
+  {ar:'تم الحجز', en:'Booked'}, {ar:'تم الاستلام', en:'Collected'}, {ar:'قيد التنظيف', en:'Cleaning'},
+  {ar:'جاهز', en:'Ready'}, {ar:'خرج للتوصيل', en:'Out for delivery'}, {ar:'تم التسليم', en:'Delivered'}
 ];
 const OUT_FOR_DELIVERY = 4, DELIVERED = 5;
 const PAY = { none:null, unpaid:{ar:'بانتظار الدفع', en:'Awaiting payment', cls:'warn'}, paid:{ar:'مدفوع', en:'Paid', cls:'ok'}, legacy:null };
+// Help reasons shown according to the order stage. These only prepare a message; nothing changes automatically.
+const HELP_REASONS = [
+  { v:'reschedule',   ar:'تعديل موعد الاستلام أو التوصيل', en:'Change the pickup or delivery time', when:o => o.status < OUT_FOR_DELIVERY },
+  { v:'notcollected', ar:'السائق ما استلم الكيس',          en:'The driver didn’t collect the bag', when:o => o.status === 0 },
+  { v:'delay',        ar:'تأخر الطلب',                     en:'My order is delayed',              when:o => o.status < DELIVERED },
+  { v:'items',        ar:'استفسار عن القطع أو المبلغ',     en:'Question about items or the amount', when:o => !!o.bill },
+  { v:'payment',      ar:'مشكلة في الدفع',                 en:'Payment problem',                  when:o => !!o.bill },
+  { v:'damaged',      ar:'قطعة ناقصة أو متضررة',           en:'Missing or damaged item',          when:o => o.status >= DELIVERED },
+  { v:'cancel',       ar:'طلب إلغاء',                      en:'Cancellation request',             when:o => o.status === 0 },
+  { v:'other',        ar:'استفسار آخر',                    en:'Something else',                   when:() => true }
+];
+const COMP_REASONS = [ {v:'delay', ar:'تأخر الطلب', en:'Order delay'}, {v:'damage', ar:'قطعة متضررة', en:'Damaged item'}, {v:'goodwill', ar:'تقدير لتجربتك', en:'Goodwill gesture'} ];
 const FRAMES = [
   {id:'se', name:'iPhone SE', w:375, h:667, sat:20, sab:0, rad:0, notch:false},
   {id:'i15', name:'iPhone 15 / 16', w:393, h:852, sat:54, sab:34, rad:52, notch:true},
@@ -654,60 +723,49 @@ const FRAMES = [
 ];
 const STEP_NAMES = () => [tx('الخدمات','Services'), tx('الموقع والموعد','Location & time'), tx('التأكيد','Confirm')];
 
-// ---- State -----------------------------------------------------------------
+// ---- Storage: device settings + one record per verified phone number ----------
+const loadJSON = k => { try { return JSON.parse(localStorage.getItem(k)) } catch(e) { return null } };
+const saveJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch(e) {} };
 function newDraft(prefs){
   return { services:[], prefs:{...(prefs||{shirts:'hanger',scent:'light',starch:'none'})}, savePrefs:false, notes:'',
     addressId:null, bagSpot:'', quickNotes:[], date:null, slot:null, repeat:'none', deliveryMode:'later', dDate:null, dSlot:null, touched:false };
 }
-function initialState(){
+function newUser(phone){
   const prefs = {shirts:'hanger', scent:'light', starch:'none'};
-  return {
-    v:3, lang:'ar', view:'tab', tab:'home', step:1, fromReview:false, ordersSeg:'current', orderId:null, invoiceId:null, prev:null, invSeg:'inv',
-    profile:{ nameAr:'عميل تجريبي', nameEn:'Demo customer', phone:'+966 5X XXX XXXX' },
-    addresses:[
-      {id:'a1', type:'home', city:'الرياض', district:'حي النرجس', street:'شارع 15، مبنى 8', details:'شقة 3، الدور الثاني', note:'الجرس على اليمين'},
-      {id:'a2', type:'work', city:'الرياض', district:'حي العليا', street:'طريق الملك فهد، برج 2', details:'الاستقبال', note:''}
-    ],
-    currentAddressId:'a1', prefs, draft:newDraft(prefs), orders:[], seq:1040,
-    demo:{ failSubmit:false, failSlots:false, solid:false, frame:'i15', tax:'pending' }
-  };
+  return { v:5, phone, profile:{ name:'' }, created:Date.now(),
+    view:'tab', tab:'home', step:1, fromReview:false, ordersSeg:'current', orderId:null, invoiceId:null, prev:null, invSeg:'inv',
+    addresses:[], currentAddressId:null, prefs, draft:newDraft(prefs), orders:[], seq:1040,
+    wallet:{ tx:[], offers:[] }, demo:{ failSubmit:false, failSlots:false, tax:'pending' } };
 }
-// Migrate demo data saved by v1.3 (services washIron/iron/home; estimate-based orders).
-function migrateV2(old){
-  const m = initialState(), map = { washIron:'wi', iron:'ir', home:'hh' };
-  ['lang','addresses','currentAddressId','prefs','seq','profile'].forEach(k => { if (old[k] !== undefined) m[k] = old[k] });
-  m.demo = { ...m.demo, ...(old.demo||{}) };
-  const svc = list => (list||[]).map(s => map[s] || s).filter(s => CAT[s]);
-  m.orders = (old.orders||[]).map(o => ({ id:o.id, demo:true, created:o.created||Date.now(), services:svc(o.services), prefs:o.prefs||m.prefs, notes:o.notes||'',
-    address:o.address, bagSpot:o.driverNote||'', quickNotes:[], date:o.date, slot:o.slot, repeat:o.repeat||'none',
-    deliveryMode:o.deliveryMode||'later', dDate:o.dDate||null, dSlot:o.dSlot||null,
-    status: o.status >= 4 ? DELIVERED : (o.status||0), payment: o.status >= 4 ? 'legacy' : 'none', bill:null, payments:[], migrated:true }));
-  const d = old.draft || {};
-  m.draft = { ...newDraft(m.prefs), services:svc(d.services), prefs:d.prefs||m.prefs, notes:d.notes||'', addressId:d.addressId||null,
-    date:d.date||null, slot:d.slot||null, repeat:d.repeat||'none', deliveryMode:d.deliveryMode||'later', dDate:d.dDate||null, dSlot:d.dSlot||null,
-    touched: !!(d.touched && svc(d.services).length) };
-  return m;
+// Demo data saved by v1.4/v1.5 (single anonymous customer) moves once into the first account verified on this device.
+function adoptV3(u){
+  const old = loadJSON(V3_KEY); if (!old || G.v3Adopted) return u;
+  ['addresses','currentAddressId','prefs','seq','orders','invSeg'].forEach(k => { if (old[k] !== undefined) u[k] = old[k] });
+  u.orders = (u.orders||[]).map(o => ({ payments:[], quickNotes:[], ...o }));
+  if (old.draft) u.draft = {...newDraft(u.prefs), ...old.draft};
+  if (old.demo) u.demo = { ...u.demo, failSubmit:!!old.demo.failSubmit, failSlots:!!old.demo.failSlots, tax:old.demo.tax||'pending' };
+  G.v3Adopted = true; u.adoptedV3 = true;
+  return u;
 }
-let S = null;
-try { S = JSON.parse(localStorage.getItem(STORE_KEY)) } catch(e) {}
-if (!S) { try { const old = JSON.parse(localStorage.getItem(OLD_KEYS[0])); if (old && old.draft) S = migrateV2(old) } catch(e) {} }
-if (!S || !S.draft || S.v !== 3) S = S && S.v === 3 ? S : initialState();
-S.draft = {...newDraft(S.prefs), ...S.draft}; S.step = Math.min(3, Math.max(1, S.step || 1));
-S.demo = {...initialState().demo, ...S.demo};
-if (!['tab','book','success','order','prices','invoices','invoice'].includes(S.view)) S.view = 'tab';
+const v3Old = loadJSON(V3_KEY);
+let G = loadJSON(DEVICE_KEY) || { lang: v3Old?.lang || 'ar', phone:null, frame: v3Old?.demo?.frame || 'i15', solid: !!v3Old?.demo?.solid, v3Adopted:false, supportTest:{whatsapp:'', email:''} };
+G.supportTest = G.supportTest || { whatsapp:'', email:'' };
+let S = G.phone ? loadJSON(USER_PREFIX + G.phone) : null;
+if (G.phone && !S) G.phone = null;
+if (S) { S.draft = {...newDraft(S.prefs), ...S.draft}; S.wallet = S.wallet || {tx:[], offers:[]}; S.step = Math.min(3, Math.max(1, S.step||1));
+  if (!['tab','book','success','order','prices','invoices','invoice','wallet'].includes(S.view)) S.view = 'tab'; }
 const T = { sheet:null, errors:{}, submitting:false, submitError:false, slots:{key:null, loading:false, error:false, list:[]},
-  addrForm:null, lastKey:'', navDir:'f', scrollMem:{}, plQuery:'', plCat:'all',
-  pay:null,      // {orderId, method, outcome, state:'idle'|'processing'|'failed'|'success'}
-  driver:null,   // {orderId, lines:[{id, qty}]}
-  rate:null };
-function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(S)) } catch(e){} }
+  addrForm:null, lastKey:'', navDir:'f', scrollMem:{}, plQuery:'', plCat:'all', navIdx:null, navBusy:false,
+  auth:{ step:'welcome', phone:'', code:null, entered:'', err:null, resendAt:0, busy:false, name:'' },
+  pay:null, driver:null, rate:null, help:null, topup:null, comp:null, fakeNow:null };
+function save(){ saveJSON(DEVICE_KEY, G); if (S && G.phone) saveJSON(USER_PREFIX + G.phone, S) }
 
 // ---- Helpers ---------------------------------------------------------------
-const ar = () => S.lang === 'ar';
+const ar = () => G.lang === 'ar';
 const tx = (a, e) => ar() ? a : e;
 const nm = o => ar() ? o.ar : o.en;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const amt = h => (h/100).toFixed(2);                                   // halalas → "123.50"
+const amt = h => (h/100).toFixed(2);
 const money = h => ar() ? `<span class="num">${amt(h)}</span> ر.س` : `SAR <span class="num">${amt(h)}</span>`;
 const moneyTxt = h => ar() ? `${amt(h)} ر.س` : `SAR ${amt(h)}`;
 const payLabel = h => ar() ? `ادفع الآن · ${amt(h)} ر.س` : `Pay now · SAR ${amt(h)}`;
@@ -733,13 +791,33 @@ const svcNames = o => o.services.map(s => nm(CAT[s])).join(sep());
 const normAr = s => String(s).toLowerCase().replace(/[ً-ْـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/ؤ/g,'و').replace(/ئ/g,'ي').replace(/\s+/g,' ').trim();
 const itemName = it => ar() ? it.ar : it.en;
 const itemAlt = it => ar() ? it.en : it.ar;
-function statusText(o){
-  const p = PAY[o.payment];
-  return nm(STEPS[o.status]) + (p && o.status < DELIVERED ? ' · ' + nm(p) : '');
-}
+function statusText(o){ const p = PAY[o.payment]; return nm(STEPS[o.status]) + (p && o.status < DELIVERED ? ' · ' + nm(p) : '') }
 const isUnpaid = o => o.payment === 'unpaid';
+const fmtPhone = p => p ? `+966 ${p.slice(0,2)} ${p.slice(2,5)} ${p.slice(5)}` : '';
+function normPhone(raw){
+  let d = String(raw).replace(/[^\d٠-٩]/g,'').replace(/[٠-٩]/g, c => '٠١٢٣٤٥٦٧٨٩'.indexOf(c));
+  if (d.startsWith('00966')) d = d.slice(5); else if (d.startsWith('966')) d = d.slice(3);
+  if (d.startsWith('0')) d = d.slice(1);
+  return /^5\d{8}$/.test(d) ? d : null;
+}
+// Greeting by Asia/Riyadh time: 05:00–11:59 morning, otherwise evening.
+const now = () => T.fakeNow ? new Date(T.fakeNow) : new Date();
+function riyadhHour(d = now()){
+  const p = new Intl.DateTimeFormat('en-GB', { timeZone:'Asia/Riyadh', hour:'2-digit', hourCycle:'h23' }).format(d);
+  return Number(p) % 24;
+}
+function greeting(name, d = now()){
+  const h = riyadhHour(d), morning = h >= 5 && h < 12;
+  return morning ? tx(`صباح الخير، ${name} ☀️`, `Good morning, ${name} ☀️`) : tx(`مساء الخير، ${name} 🌙`, `Good evening, ${name} 🌙`);
+}
+function supportChannels(){
+  const wa = (SUPPORT.whatsapp || G.supportTest.whatsapp || '').replace(/\D/g,'');
+  const email = (SUPPORT.email || G.supportTest.email || '').trim();
+  return { wa: /^\d{8,15}$/.test(wa) ? wa : null, email: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) ? email : null,
+    test: !SUPPORT.whatsapp && !SUPPORT.email && !!(G.supportTest.whatsapp || G.supportTest.email) };
+}
 
-// ---- Billing (all amounts in halalas; computed only from the catalogue) ------
+// ---- Billing (halalas; only from the catalogue) --------------------------------
 function computeBill(entries, taxMode){
   const lines = [], assess = [];
   for (const e of entries) {
@@ -749,26 +827,41 @@ function computeBill(entries, taxMode){
   }
   const subtotal = lines.reduce((s, l) => s + l.total, 0);
   const delivery = PRICING.deliveryFee == null ? 0 : PRICING.deliveryFee;
-  const discount = 0;
-  const base = subtotal + delivery - discount;
+  const discount = 0, base = subtotal + delivery - discount;
   let vat = null, total = base;
   if (taxMode === 'inclusive') vat = Math.round(base * PRICING.vatRate * 100 / (100 + PRICING.vatRate * 100));
   if (taxMode === 'exclusive') { vat = Math.round(base * PRICING.vatRate); total = base + vat }
   return { lines, assess, subtotal, delivery, deliverySet: PRICING.deliveryFee != null, discount, taxMode, vat, total, issued: Date.now() };
 }
-// Demo driver entry: realistic sample per booked service, taken from the catalogue.
 const SAMPLE = {
-  wi: [['Thobe',5],['Shemagh',2],['Undershirt',4],['Jeans',1]],
-  ir: [['Shirt',3],['Three-Piece Suit',1]],
-  dc: [['Abaya',1],['Bisht',1]],
-  sh: [['Sport Shoes',1]],
-  rg: [['Prayer Rug 1',2]],
+  wi: [['Thobe',5],['Shemagh',2],['Undershirt',4],['Jeans',1]], ir: [['Shirt',3],['Three-Piece Suit',1]],
+  dc: [['Abaya',1],['Bisht',1]], sh: [['Sport Shoes',1]], rg: [['Prayer Rug 1',2]],
   hh: [['Medium Duvet',1],['Pillow Case',2],['Large Chair Cover',1]]
 };
 function sampleEntries(services){
   const out = [];
   for (const s of services) for (const [en, q] of (SAMPLE[s]||[])) { const it = itemBy(s, en); if (it) out.push({ id:it.id, qty:q }) }
   return out;
+}
+
+// ---- Wallet (simulated; balances are always derived from posted transactions) ----
+function walletBal(){
+  let funded = 0, comp = 0;
+  for (const t of S.wallet.tx) if (t.status === 'posted') { if (t.bucket === 'comp') comp += t.amount; else funded += t.amount }
+  return { funded, comp, total: funded + comp };
+}
+function postTx(t){
+  if (t.ref && S.wallet.tx.some(x => x.ref === t.ref && x.bucket === t.bucket && x.status === 'posted')) return false;   // idempotent
+  S.wallet.tx.push({ id:'wt_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6), at:Date.now(), status:'posted', ...t });
+  return true;
+}
+// Wallet spend order (prototype assumption, pending approval): compensation credit first, then customer-funded balance.
+function walletDebit(amount, ref, orderId){
+  const b = walletBal(); if (amount > b.total) return false;
+  const fromComp = Math.min(b.comp, amount), fromFunded = amount - fromComp;
+  if (fromComp) postTx({ kind:'payment', bucket:'comp', amount:-fromComp, ref, orderId });
+  if (fromFunded) postTx({ kind:'payment', bucket:'funded', amount:-fromFunded, ref, orderId });
+  return true;
 }
 
 // ---- Icons -----------------------------------------------------------------
@@ -784,7 +877,7 @@ const P = {
   iron:'<path d="M2.5 17.5h15.5a3 3 0 0 0 3-3V8.5H11c-4.7 0-8.5 4-8.5 9z"/><path d="M11 8.5V6h7"/><path d="M6 14h.01M9 14h.01M12 14h.01"/>',
   hanger:'<path d="M10 6a2 2 0 1 1 2.7 1.9c-.4.1-.7.5-.7.9V10"/><path d="M12 10 3.2 16.2c-.8.6-.4 1.8.6 1.8h16.4c1 0 1.4-1.2.6-1.8z"/>',
   shoe:'<path d="M3 15.5V8l3.5.8 1.8 3 4.2 1.2 5.5 1A3 3 0 0 1 21 17v1H3z"/><path d="M3 18h18"/>',
-  rug:'<rect x="5" y="3.5" width="14" height="17" rx="1.5"/><path d="M8.5 7.5h7v9h-7z"/><path d="M7 20.5v1.5M10 20.5v1.5M14 20.5v1.5M17 20.5v1.5M7 2v1.5M10 2v1.5M14 2v1.5M17 2v1.5"/>',
+  rug:'<rect x="5" y="3.5" width="14" height="17" rx="1.5"/><path d="M8.5 7.5h7v9h-7z"/>',
   bed:'<path d="M3 19V6M3 14h18v5M21 14v-1.5A3.5 3.5 0 0 0 17.5 9H11v5"/><circle cx="7" cy="11" r="1.8"/>',
   plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>',
   bell:'<path d="M6 16v-5a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
@@ -808,21 +901,68 @@ const P = {
   star:'<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/>',
   tool:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>',
   door:'<path d="M5 21V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v17"/><path d="M3 21h18M14.5 12h.01"/>',
-  wallet:'<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/>'
+  wallet:'<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/>',
+  gift:'<rect x="3.5" y="8" width="17" height="5" rx="1"/><path d="M5 13v8h14v-8M12 8v13"/><path d="M12 8c-1.5-3-5-3.5-5-1.2S10 8 12 8zm0 0c1.5-3 5-3.5 5-1.2S14 8 12 8z"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/>',
+  wa:'<path d="M4 20l1.3-3.9A8 8 0 1 1 8 18.8z"/><path d="M9.2 8.6c.2-.4.5-.4.8-.4h.5c.2 0 .4.1.5.4l.6 1.5c.1.2 0 .5-.1.6l-.5.6c.6 1.1 1.5 2 2.6 2.6l.6-.5c.2-.1.4-.2.6-.1l1.5.6c.3.1.4.3.4.5v.5c0 .3 0 .6-.4.8-.6.4-1.5.6-2.6.1A9 9 0 0 1 9 11.2c-.5-1.1-.3-2 .2-2.6z" fill="currentColor" stroke="none"/>',
+  logout:'<path d="M14 4h5v16h-5"/><path d="M10 8l-4 4 4 4M6 12h10"/>',
+  lock:'<rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>'
 };
 const I = (n, s=22, cls='') => `<svg class="${cls}" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
 const chevF = (s=20) => I('chev', s, 'flip');
+
+// ---- 3D service art (one consistent set; also used on the marketing website) ----
+const ART3D = {
+  wi:`<ellipse cx="60" cy="104" rx="38" ry="7" fill="url(#g3-shadow)"/>
+    <path d="M37 27 50 21c3 7 17 7 20 0l13 6 15 15-11 12-7-5v45c-13 4-27 4-40 0V49l-7 5-11-12z" fill="url(#g3-white)"/>
+    <path d="M70 21l13 6 15 15-11 12-7-5v45c-6 2-12 2-18 2 4-20 6-46 8-75z" fill="url(#g3-white-s)" opacity=".75"/>
+    <path d="M50 21c3 7 17 7 20 0l-3-2c-3 5-11 5-14 0z" fill="url(#g3-blue-d)"/>
+    <path d="M22 42l15-15 3 4-14 14zM98 42 83 27l-3 4 14 14z" fill="url(#g3-blue)"/>
+    <path d="M60 33v58" stroke="#C9D7F1" stroke-width="1.6" stroke-dasharray="1 7" stroke-linecap="round"/>
+    <circle cx="94" cy="20" r="8" fill="url(#g3-bubble)"/><circle cx="104" cy="35" r="4.5" fill="url(#g3-bubble)"/><circle cx="91" cy="17" r="2.2" fill="#fff"/>`,
+  ir:`<ellipse cx="60" cy="102" rx="42" ry="7" fill="url(#g3-shadow)"/>
+    <path d="M18 86h80c3 0 4 3 2 5l-3 4H20l-4-5c-1-2 0-4 2-4z" fill="url(#g3-silver)"/>
+    <path d="M20 86c2-20 14-36 34-38h26c8 0 13 4 15 11l6 27z" fill="url(#g3-blue)"/>
+    <path d="M24 82c3-14 13-26 28-28h26c5 0 9 2 11 6" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="3" stroke-linecap="round"/>
+    <path d="M47 48c0-12 6-18 16-18h18c6 0 8 4 6 9l-3 9" fill="none" stroke="url(#g3-blue-d)" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="36" cy="74" r="2.4" fill="#fff" opacity=".8"/><circle cx="46" cy="74" r="2.4" fill="#fff" opacity=".8"/><circle cx="56" cy="74" r="2.4" fill="#fff" opacity=".8"/>
+    <path d="M22 30c-4-5 4-8 0-13M32 26c-4-5 4-8 0-13" fill="none" stroke="#9DBCFF" stroke-width="3" stroke-linecap="round"/>`,
+  dc:`<ellipse cx="60" cy="106" rx="34" ry="6" fill="url(#g3-shadow)"/>
+    <circle cx="60" cy="20" r="5" fill="none" stroke="#9AA8BF" stroke-width="3.4"/><path d="M60 25v11" stroke="#9AA8BF" stroke-width="3.6" stroke-linecap="round"/>
+    <path d="M60 36 22 53h76z" fill="none" stroke="url(#g3-silver)" stroke-width="4.5" stroke-linejoin="round"/>
+    <path d="M28 54h64l6 44c-24 6-52 6-76 0z" fill="url(#g3-blue)"/>
+    <path d="M60 54h32l6 44c-12 3-25 4-38 4z" fill="url(#g3-blue-d)" opacity=".55"/>
+    <path d="M47 54l13 30 13-30-6 0-7 15-7-15z" fill="url(#g3-white)"/>
+    <circle cx="60" cy="90" r="2.6" fill="#fff"/><circle cx="60" cy="98" r="2.6" fill="#fff"/>
+    <path d="M30 60l5 36" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-linecap="round"/>`,
+  sh:`<ellipse cx="60" cy="98" rx="48" ry="7" fill="url(#g3-shadow)"/>
+    <path d="M14 80h94c3 0 4 2 4 5v3c0 4-3 6-7 6H16c-4 0-6-2-6-6v-3c0-3 1-5 4-5z" fill="url(#g3-blue)"/>
+    <path d="M14 82h96" stroke="#fff" stroke-opacity=".7" stroke-width="3" stroke-linecap="round"/>
+    <path d="M16 80c-2-14 0-24 6-26l18-2c4 6 12 6 16-2l6-6c6 2 12 6 18 10 12 6 26 12 28 26z" fill="url(#g3-white)"/>
+    <path d="M80 56c12 6 26 12 28 24H78c4-8 4-16 2-24z" fill="url(#g3-sky)" opacity=".85"/>
+    <path d="M16 80c-2-14 0-24 6-26l7 1c-3 8-3 17 1 25z" fill="url(#g3-blue-d)"/>
+    <path d="M40 52c4 6 12 6 16-2" fill="none" stroke="url(#g3-blue-d)" stroke-width="3" stroke-linecap="round"/>
+    <path d="M60 50l7 5M66 47l7 5M72 51l7 5" stroke="#8EA6D2" stroke-width="3" stroke-linecap="round"/>
+    <path d="M34 68c10 3 24 4 36 2" fill="none" stroke="#C9D7F1" stroke-width="2.5" stroke-linecap="round"/>`,
+  rg:`<ellipse cx="60" cy="98" rx="46" ry="8" fill="url(#g3-shadow)"/>
+    <path d="M12 72 62 54l46 18-50 20z" fill="url(#g3-blue)"/>
+    <path d="M12 72l46 20v6L12 78z" fill="url(#g3-blue-d)"/><path d="M58 92l50-20v6L58 98z" fill="#0A3BAE"/>
+    <path d="M24 72l38-13 34 13-38 15z" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="2.4"/>
+    <path d="M46 72c4-10 16-12 22-4l6 9-16 6z" fill="url(#g3-sky)" opacity=".9"/>
+    <path d="M10 73l-4 2M14 75l-4 2M18 77l-4 2M22 79l-4 2M104 71l5 2M100 73l5 2M96 75l5 2M92 77l5 2" stroke="#8DB3FF" stroke-width="2" stroke-linecap="round"/>`,
+  hh:`<ellipse cx="60" cy="104" rx="42" ry="7" fill="url(#g3-shadow)"/>
+    <path d="M20 82h76c4 0 6 3 6 6v6c0 3-2 6-6 6H20c-4 0-6-3-6-6v-6c0-3 2-6 6-6z" fill="url(#g3-blue-d)"/>
+    <path d="M22 64h74c4 0 6 3 6 6v6c0 3-2 6-6 6H22c-4 0-6-3-6-6v-6c0-3 2-6 6-6z" fill="url(#g3-white)"/>
+    <path d="M26 46h68c4 0 6 3 6 6v6c0 3-2 6-6 6H26c-4 0-6-3-6-6v-6c0-3 2-6 6-6z" fill="url(#g3-blue)"/>
+    <path d="M94 46c4 0 6 3 6 6v6c0 3-2 6-6 6M96 64c4 0 6 3 6 6v6c0 3-2 6-6 6M96 82c4 0 6 3 6 6v6c0 3-2 6-6 6" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="2.5"/>
+    <path d="M30 52h40M28 70h44" stroke="#fff" stroke-opacity=".55" stroke-width="2.5" stroke-linecap="round"/>`
+};
+const art = (id, size) => `<svg class="art3d" viewBox="0 0 120 120" ${size?`width="${size}" height="${size}"`:''} aria-hidden="true" focusable="false">${ART3D[id]}</svg>`;
 
 const HERO_ART = `<svg class="hero-art" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
   <circle cx="60" cy="250" r="120" fill="#fff" opacity=".07"/><circle cx="330" cy="40" r="90" fill="#fff" opacity=".06"/>
   <circle cx="58" cy="92" r="16" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.5"/>
   <circle cx="160" cy="58" r="7" fill="#fff" opacity=".35"/><circle cx="30" cy="160" r="9" fill="#fff" opacity=".22"/>
-  <g fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".92">
-    <path d="M102 104a12 12 0 1 1 15 11.6c-3 .8-5 3.4-5 6.4v4"/>
-    <path d="M112 126 52 160h120z"/>
-    <path d="M70 160l-8 16 14 7 2-8v62h68v-62l2 8 14-7-8-16" opacity=".75"/>
-    <path d="M98 160c2 8 8 12 14 12s12-4 14-12" opacity=".75"/>
-  </g>
   <path d="M34 210l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#fff" opacity=".6"/>
 </svg>`;
 const MAP_ART = `<svg viewBox="0 0 360 140" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -843,14 +983,66 @@ function toast(msg, kind='ok'){
   setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 260) }, 2800);
 }
 
-// ==== VIEWS ===================================================================
-// Packages are hidden until approved packages exist; the screen (vPackages) is kept for later.
-const FEATURES = { packages:false };
-function tabbar(){
-  const tabs = [['home','home',tx('الرئيسية','Home')],['orders','orders',tx('طلباتي','My orders')],
+// ==== AUTH (simulated) ============================================================
+function vAuth(){
+  const A_ = T.auth;
+  const top = (back) => `<div class="auth-top">${back?`<button class="circle" style="background:var(--surface)" data-a="authBack" aria-label="${tx('رجوع','Back')}">${I('back',22,'flip')}</button>`:''}
+    <span class="grow"></span><button class="circle" style="background:var(--surface);font-weight:700;font-size:14px" data-a="lang" aria-label="${tx('Switch to English','التبديل إلى العربية')}">${ar()?'EN':'ع'}</button></div>`;
+  if (A_.step === 'welcome') return `<div class="auth enter-u"><main class="scroll">
+      ${top(false)}
+      <div class="auth-hero" aria-hidden="true">
+        <div class="a" style="inset-inline-start:4%;top:10px;width:132px;height:132px">${art('wi')}</div>
+        <div class="a" style="inset-inline-end:6%;top:0;animation-delay:-2s">${art('hh')}</div>
+        <div class="a" style="inset-inline-end:30%;top:104px;width:110px;height:110px;animation-delay:-4s">${art('ir')}</div>
+      </div>
+      <div class="brandmark">${'<span class="logo">'+I('drop',22)+'</span>'}<b style="font-size:20px">${tx('ذا كلينر','The Cleaner')}</b>
+        <span class="tag warn">${tx('نسخة تجريبية','Prototype')}</span></div>
+      <h1 class="h1" style="font-size:28px;margin-top:16px">${tx('أهلاً بك في ذا كلينر','Welcome to The Cleaner')}</h1>
+      <p class="sub" style="font-size:15.5px">${tx('خلّ كيسك عند الباب، والباقي علينا. سجّل برقم جوالك وابدأ أول طلب.','Leave your bag at the door and we’ll take it from there. Start with your mobile number.')}</p>
+    </main><div class="auth-foot">
+      <button class="btn" data-a="authStart" id="auth-start">${tx('ابدأ برقم جوالك','Continue with your mobile number')}</button>
+      <p class="small muted" style="text-align:center;margin:10px 0 0">${tx('التسجيل والدخول بنفس الخطوات — بدون كلمة مرور.','Sign up and sign in work the same way — no password.')}</p></div></div>`;
+  if (A_.step === 'phone') return `<div class="auth enter-f"><main class="scroll">${top(true)}
+      <h1 class="h1" style="margin-top:12px">${tx('رقم جوالك','Your mobile number')}</h1>
+      <p class="sub">${tx('نستخدم رقمك للتسجيل أو الدخول — نفس الخطوات للحالتين.','We use your number to sign up or sign in — the same steps either way.')}</p>
+      <div class="field ${A_.err?'has-err':''}"><label for="ph" class="sr">${tx('رقم الجوال','Mobile number')}</label>
+        <div class="phone-field"><span class="cc">🇸🇦 +966</span><input id="ph" class="inp" data-auth="phone" inputmode="tel" autocomplete="tel-national" placeholder="5X XXX XXXX" value="${esc(A_.phone)}" maxlength="14" aria-invalid="${!!A_.err}"></div>
+        ${A_.err?`<div class="err-msg" role="alert">${I('alert',16)} ${A_.err}</div>`:''}</div>
+      <div class="note warn" style="margin-top:16px">${I('info',18)}<span>${tx('نسخة تجريبية: يظهر رمز التحقق على الشاشة، ولا تُرسل أي رسالة SMS.','Prototype: the verification code is shown on screen and no SMS is sent.')}</span></div>
+    </main><div class="auth-foot"><button class="btn" data-a="authPhone" id="auth-phone" ${A_.busy?'disabled':''}>${A_.busy?`<span class="spin"></span>`:''}${tx('متابعة','Continue')}</button></div></div>`;
+  if (A_.step === 'otp') { const left = Math.max(0, Math.ceil((A_.resendAt - Date.now())/1000));
+    return `<div class="auth enter-f"><main class="scroll">${top(true)}
+      <h1 class="h1" style="margin-top:12px">${tx('رمز التحقق','Verification code')}</h1>
+      <p class="sub">${tx('أدخل الرمز للرقم','Enter the code for')} <b class="num" style="color:var(--ink)">${fmtPhone(A_.phone)}</b> · <button class="link" data-a="authBack" style="min-height:0;padding:0">${tx('تغيير الرقم','Change number')}</button></p>
+      <div class="demo-code" role="note" id="demo-otp">${I('lock',20)}<span class="grow">${tx('رمز تجريبي للعرض فقط — لم تُرسل رسالة SMS:','Demo code for this prototype — no SMS was sent:')}</span><b>${A_.code}</b></div>
+      <div class="field ${A_.err?'has-err':''}" style="margin-top:16px"><label for="otp" class="sr">${tx('رمز التحقق','Verification code')}</label>
+        <input id="otp" class="inp otp" data-auth="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="4" value="${esc(A_.entered)}" aria-invalid="${!!A_.err}">
+        ${A_.err?`<div class="err-msg" role="alert">${I('alert',16)} ${A_.err}</div>`:''}</div>
+      <p class="small" style="text-align:center;margin-top:12px">${left ? `<span class="muted" id="resend-wait">${tx('إعادة الإرسال بعد','Resend in')} <span class="num">0:${String(left).padStart(2,'0')}</span></span>`
+        : `<button class="link" data-a="authResend" id="auth-resend">${tx('إعادة إرسال الرمز (تجريبي)','Resend code (demo)')}</button>`}</p>
+    </main><div class="auth-foot"><button class="btn" data-a="authVerify" id="auth-verify" ${A_.busy?'disabled':''}>${A_.busy?`<span class="spin"></span>`:''}${tx('تحقق','Verify')}</button></div></div>`; }
+  return `<div class="auth enter-f"><main class="scroll">${top(false)}
+      <h1 class="h1" style="margin-top:12px">${tx('وش نناديك؟','What should we call you?')}</h1>
+      <p class="sub">${tx('اكتب اسمك عشان نرحّب فيك. تقدر تعدّله لاحقاً.','Tell us your name so we can greet you. You can change it later.')}</p>
+      <div class="field ${A_.err?'has-err':''}"><label for="nm">${tx('الاسم','Name')}</label>
+        <input id="nm" class="inp" data-auth="name" autocomplete="given-name" maxlength="30" value="${esc(A_.name)}" placeholder="${tx('مثال: سارة','e.g. Sara')}">
+        ${A_.err?`<div class="err-msg" role="alert">${I('alert',16)} ${A_.err}</div>`:''}</div>
+    </main><div class="auth-foot"><button class="btn" data-a="authName" id="auth-name">${tx('ابدأ','Get started')}</button></div></div>`;
+}
+const newCode = () => String(1000 + Math.floor(Math.random() * 9000));
+
+// ==== MAIN VIEWS ===================================================================
+function navbar(){
+  const items = [['home','home',tx('الرئيسية','Home')],['orders','orders',tx('طلباتي','My orders')],
     ...(FEATURES.packages ? [['packages','box',tx('الباقات','Packages')]] : []),['account','user',tx('حسابي','Account')]];
-  return `<nav class="tabbar glass" aria-label="${tx('التنقل الرئيسي','Main navigation')}">${tabs.map(([id,ic,l]) =>
-    `<button data-a="tab" data-v="${id}" class="${S.tab===id&&S.view==='tab'?'on':''}" aria-current="${S.tab===id?'page':'false'}">${I(ic,23)}<span>${l}</span></button>`).join('')}</nav>`;
+  const idx = Math.max(0, items.findIndex(i => i[0] === S.tab));
+  const from = T.navIdx == null ? idx : T.navIdx;
+  return `<div class="navwrap">
+    <nav class="capsule glass" aria-label="${tx('التنقل الرئيسي','Main navigation')}"><span class="ind" style="--i:${from}" data-to="${idx}" aria-hidden="true"></span>
+      ${items.map(([id,ic,l],i) => `<button class="nb ${i===idx?'on':''}" data-a="tab" data-v="${id}" aria-current="${i===idx?'page':'false'}">${I(ic,22)}<span>${l}</span></button>`).join('')}
+    </nav>
+    <button class="plus" data-a="createOrder" id="create-order" aria-label="${tx('إنشاء طلب','Create order')}" title="${tx('إنشاء طلب','Create order')}">${I('plus',28)}</button>
+  </div>`;
 }
 function subHead(title, sub, backAction='viewBack'){
   return `<header class="bk-head glass strong">
@@ -859,29 +1051,30 @@ function subHead(title, sub, backAction='viewBack'){
 }
 
 function vHome(){
-  const a = addrById(S.currentAddressId) || S.addresses[0];
+  const a = addrById(S.currentAddressId);
   const ao = activeOrder(), d = S.draft;
   const card = c => `
     <button class="svc-card" data-a="startBook" data-v="${c.id}">
-      <span class="art">${I(c.icon,36)}</span>
+      <span class="art">${art(c.id)}</span>
       <span class="body"><span class="svc-t">${nm(c)}</span><span class="svc-d">${ar()?c.dAr:c.dEn}</span><span class="go">${I('plus',16)}</span></span>
     </button>`;
   return `<div class="screen">
     <main class="scroll with-tabbar" id="home-scroll">
       <section class="hero">${HERO_ART}
         <div class="hero-top">
-          <button class="pill glass" data-a="sheet" data-v="pickAddr" aria-label="${tx('تغيير عنوان الاستلام','Change pickup address')}" style="max-width:62%">
-            <span class="dot">${I('pin',18)}</span><span class="txt">${a ? esc(addrType(a.type)) + ' · <bdi>' + esc(a.district) + '</bdi>' : tx('أضف عنواناً','Add an address')}</span>${I('down',16)}</button>
+          <button class="pill glass" data-a="${a?'sheet':'addAddr'}" data-v="pickAddr" aria-label="${tx('عنوان الاستلام','Pickup address')}" style="max-width:62%">
+            <span class="dot">${I('pin',18)}</span><span class="txt">${a ? esc(addrType(a.type)) + ' · <bdi>' + esc(a.district) + '</bdi>' : tx('أضف عنوان الاستلام','Add pickup address')}</span>${I(a?'down':'plus',16)}</button>
           <span class="grow"></span>
           <button class="circle glass" data-a="lang" aria-label="${tx('Switch to English','التبديل إلى العربية')}" style="font-weight:700;font-size:14px">${ar()?'EN':'ع'}</button>
           <button class="circle glass" data-a="soon" aria-label="${tx('الإشعارات','Notifications')}">${I('bell',20)}</button>
         </div>
         <div class="hero-copy">
-          <div class="brandline"><b>${tx('ذا كلينر','The Cleaner')}</b><button class="demo glass" data-a="sheet" data-v="demo">${tx('نسخة تجريبية · بيانات وهمية','Prototype · mock data')}</button></div>
-          <h1>${tx('ملابسك نظيفة… بدون مشوار','Clean clothes… without the trip')}</h1>
-          <p>${tx('خلّ كيسك عند الباب، والباقي علينا. نستلم ملابسك، نعتني فيها، ونرجّعها لك نظيفة ومرتّبة.','Leave your bag at the door, and we’ll take it from there. We collect your clothes, care for them, and bring them back clean and neat.')}</p>
+          <button class="demo glass" data-a="sheet" data-v="demo">${tx('نسخة تجريبية · بيانات وهمية','Prototype · mock data')}</button>
+          <h1 id="greeting">${esc(greeting(S.profile.name))}</h1>
+          <p>${tx('كيسك جاهز؟ خلّ الباقي علينا.','Bag ready? Leave the rest to us.')}</p>
           <button class="hero-cta glass strong" data-a="startBook">${tx('احجز استلام','Book a pickup')} ${chevF(18)}</button>
         </div>
+        <div class="hero-3d" aria-hidden="true">${art('wi')}</div>
       </section>
       <div class="main-sheet">
         ${d.touched && d.services.length ? `<button class="resume enter-u" data-a="resume">${I('edit',20)}<span class="grow" style="text-align:start"><b style="font-size:14.5px;display:block">${tx('أكمل حجزك','Continue your booking')}</b>
@@ -904,7 +1097,7 @@ function vHome(){
       </div>
     </main>
     <div class="top-scrim glass strong" id="top-scrim"></div>
-    ${tabbar()}
+    ${navbar()}
   </div>`;
 }
 
@@ -944,58 +1137,84 @@ function vOrders(){
         </div>`).join('')}</div>`
       : `<div class="empty enter-u"><div class="ico">${I(S.ordersSeg==='current'?'bag':'receipt',34)}</div>
           <b>${S.ordersSeg==='current' ? tx('لا توجد طلبات حالية','No current orders') : tx('لا توجد طلبات سابقة بعد','No previous orders yet')}</b>
-          <p class="sub">${S.ordersSeg==='current' ? tx('احجز استلام، وخلّ الباقي علينا.','Book a pickup and leave the rest to us.') : tx('تظهر هنا طلباتك المكتملة.','Completed orders will appear here.')}</p>
-          ${S.ordersSeg==='current' ? `<button class="btn" data-a="startBook" style="max-width:240px;margin:0 auto">${tx('احجز استلام','Book a pickup')}</button>` : ''}</div>`}
-    </div></main>${tabbar()}</div>`;
+          <p class="sub">${S.ordersSeg==='current' ? tx('اضغط ＋ لإنشاء طلب، وخلّ الباقي علينا.','Tap ＋ to create an order and leave the rest to us.') : tx('تظهر هنا طلباتك المكتملة.','Completed orders will appear here.')}</p></div>`}
+    </div></main>${navbar()}</div>`;
 }
 
+// Kept for later (FEATURES.packages = false hides every entry point).
 function vPackages(){
-  const card = n => `
-    <div class="card">
-      <div class="row" style="justify-content:space-between"><b style="font-size:16px">${tx('باقة','Package')} ${n}</b><span class="tag warn">${tx('الشروط قيد الاعتماد','Terms pending')}</span></div>
-      <div class="kv small" style="margin-top:10px"><span class="muted">${tx('الرصيد','Allowance')}</span><span>—</span></div>
-      <div class="kv small"><span class="muted">${tx('الخدمات المشمولة','Included services')}</span><span>—</span></div>
-      <div class="kv small"><span class="muted">${tx('التجديد والإلغاء','Renewal & cancellation')}</span><span>—</span></div>
-      <button class="btn sec" disabled style="margin-top:12px;min-height:46px">${tx('قريباً','Coming soon')}</button>
-    </div>`;
-  return `<div class="screen"><main class="scroll with-tabbar">
-    <div class="top-title"><h1 class="h1">${tx('الباقات والاشتراكات','Packages & subscriptions')}</h1></div>
-    <div class="pad stack">
-      <div class="note">${I('info',18)}<span>${tx('لا توجد باقات معتمدة بعد. تظهر هنا الباقات المعتمدة مع الرصيد والشروط بوضوح.','No packages are approved yet. Approved plans will show here with their allowance and terms.')}</span></div>
-      ${card(1)}${card(2)}
-    </div></main>${tabbar()}</div>`;
+  return `<div class="screen"><main class="scroll with-tabbar"><div class="top-title"><h1 class="h1">${tx('الباقات والاشتراكات','Packages & subscriptions')}</h1></div>
+    <div class="pad"><div class="note">${I('info',18)}<span>${tx('لا توجد باقات معتمدة بعد.','No packages are approved yet.')}</span></div></div></main>${navbar()}</div>`;
 }
 
 function vAccount(){
-  const p = S.prefs;
-  const li = (ic, label, val, a, v) => `<button data-a="${a}" data-v="${v||''}"><span class="li-ico">${I(ic,20)}</span><span class="grow" style="font-weight:500;text-align:start">${label}</span>${val!==''&&val!=null?`<span class="small muted">${val}</span>`:''}${chevF(18)}</button>`;
+  const p = S.prefs, b = walletBal(), ch = supportChannels();
+  const li = (ic, label, val, a, v, id) => `<button data-a="${a}" data-v="${v||''}" ${id?`id="${id}"`:''}><span class="li-ico">${I(ic,20)}</span><span class="grow" style="font-weight:500;text-align:start">${label}</span>${val!==''&&val!=null?`<span class="small muted">${val}</span>`:''}${chevF(18)}</button>`;
   const billed = S.orders.filter(o => o.bill).length;
+  const supportRows = (ch.wa || ch.email) ? `<div class="list" id="support-list">
+      ${ch.wa ? `<a href="https://wa.me/${ch.wa}" target="_blank" rel="noopener" id="support-wa"><span class="li-ico" style="color:#128C4B">${I('wa',20)}</span><span class="grow" style="font-weight:500">${tx('واتساب','WhatsApp')}</span>${chevF(18)}</a>` : ''}
+      ${ch.email ? `<a href="mailto:${ch.email}?subject=${encodeURIComponent(tx('استفسار — ذا كلينر','Question — The Cleaner'))}" id="support-email"><span class="li-ico">${I('mail',20)}</span><span class="grow" style="font-weight:500">${tx('البريد الإلكتروني','Email')}</span>${chevF(18)}</a>` : ''}
+    </div>${ch.test ? `<p class="small muted" style="margin:8px 2px 0">${tx('قنوات تجريبية محفوظة على هذا الجهاز فقط.','Test channels saved on this device only.')}</p>` : ''}`
+    : `<div class="note" id="support-empty">${I('chat',18)}<span>${tx('قنوات الدعم تُضاف قريباً. لم يُضبط رقم واتساب أو بريد إلكتروني للدعم في هذه النسخة.','Support channels are coming soon. No WhatsApp number or support email is set up in this version.')}</span></div>`;
   return `<div class="screen"><main class="scroll with-tabbar">
     <div class="top-title"><h1 class="h1">${tx('حسابي','Account')}</h1></div>
     <div class="pad">
       <div class="card tint row"><span class="ico" style="background:#fff;border-radius:50%">${I('user',24)}</span>
-        <span class="grow"><b style="display:block">${tx(S.profile.nameAr,S.profile.nameEn)}</b><span class="small muted" style="direction:ltr;unicode-bidi:isolate">${esc(S.profile.phone)}</span></span>
+        <span class="grow"><b style="display:block" id="acct-name">${esc(S.profile.name)}</b><span class="small muted num">${fmtPhone(S.phone)}</span></span>
         <span class="tag warn">${tx('تجريبي','Demo')}</span></div>
       <h2 class="h2">${tx('الطلبات والعناية','Orders & care')}</h2>
       <div class="list">
-        ${li('pin', tx('العناوين المحفوظة','Saved addresses'), S.addresses.length, 'sheet','pickAddr')}
+        ${li('pin', tx('العناوين المحفوظة','Saved addresses'), S.addresses.length, S.addresses.length?'sheet':'addAddr','pickAddr')}
         ${li('heart', tx('تفضيلات العناية','Care preferences'), nm(PREFS.scent.find(x=>x.v===p.scent)), 'sheet','prefs')}
         ${li('repeat', tx('الاستلام المتكرر','Recurring pickups'), '', 'soon')}
       </div>
       <h2 class="h2">${tx('المدفوعات','Payments')}</h2>
       <div class="list">
+        ${li('wallet', tx('المحفظة','Wallet'), moneyTxt(b.total), 'openWallet', '', 'acct-wallet')}
         ${li('receipt', tx('الفواتير وسجل المدفوعات','Invoices & payment history'), billed || '', 'openInvoices')}
         ${li('list', tx('قائمة الأسعار','Price list'), CATALOGUE.length, 'openPrices')}
-        ${li('card', tx('طرق الدفع','Payment methods'), '', 'soon')}
       </div>
+      <h2 class="h2">${tx('الدعم والتواصل','Support & contact')}</h2>
+      ${supportRows}
       <h2 class="h2">${tx('عام','General')}</h2>
       <div class="list">
         ${li('globe', tx('اللغة','Language'), ar()?'العربية':'English', 'lang')}
         ${li('bell', tx('الإشعارات','Notifications'), '', 'soon')}
-        ${li('chat', tx('الدعم والمساعدة','Help & support'), '', 'soon')}
+        ${li('logout', tx('تسجيل الخروج','Sign out'), '', 'sheet', 'signout', 'acct-signout')}
       </div>
       <button class="link" data-a="sheet" data-v="demo" style="margin-top:10px">${tx('إعدادات النسخة التجريبية','Prototype settings')}</button>
-    </div></main>${tabbar()}</div>`;
+    </div></main>${navbar()}</div>`;
+}
+
+// ---- Wallet ---------------------------------------------------------------------
+const txLabel = t => ({ topup:tx('شحن رصيد','Top-up'), compensation:tx('تعويض','Compensation'), payment:tx('دفع طلب','Order payment') }[t.kind] || t.kind);
+function vWallet(){
+  const b = walletBal(), offers = S.wallet.offers.filter(o => o.status === 'pending');
+  const list = S.wallet.tx.slice().sort((a,b) => b.at - a.at);
+  return `<div class="screen">${subHead(tx('المحفظة','Wallet'), tx('رصيد تجريبي — لا أموال حقيقية','Demo balance — no real money'))}
+    <main class="scroll with-subhead end-space" id="wallet-scroll"><div class="pad">
+      <div class="wallet-card" id="wallet-card"><span class="small" style="opacity:.85">${tx('الرصيد المتاح','Available balance')}</span>
+        <div class="bal" id="wallet-total">${money(b.total)}</div>
+        <div class="split"><div>${tx('رصيد مشحون','Topped-up balance')}<b id="wallet-funded">${money(b.funded)}</b></div><div>${tx('رصيد تعويضات','Compensation credit')}<b id="wallet-comp">${money(b.comp)}</b></div></div></div>
+      <button class="btn" data-a="topupOpen" id="topup-open" style="margin-top:14px">${I('plus',20)} ${tx('شحن الرصيد','Top up')}</button>
+      ${offers.map(o => `<div class="offer enter-u" style="margin-top:14px" data-offer="${o.id}">
+        <div class="row" style="align-items:flex-start">${I('gift',24)}<span class="grow"><b style="display:block">${tx('عرض تعويض','Compensation offer')} · ${money(o.amount)}</b>
+          <span class="small muted">${nm(COMP_REASONS.find(r=>r.v===o.reason)||COMP_REASONS[2])}${o.orderId?` · ${esc(o.orderId)}`:''}</span></span></div>
+        <p class="small" style="margin:8px 0 10px;color:var(--ink-2)">${tx('يُضاف الرصيد لمحفظتك بعد موافقتك فقط.','The credit is added to your wallet only after you accept.')}</p>
+        <div class="row" style="gap:8px"><button class="btn sm" style="flex:1" data-a="offerAccept" data-v="${o.id}">${tx('قبول التعويض','Accept')}</button>
+          <button class="btn line sm" style="flex:1" data-a="offerDecline" data-v="${o.id}">${tx('رفض','Decline')}</button></div></div>`).join('')}
+      <h2 class="h2">${tx('سجل المحفظة','Wallet history')}</h2>
+      ${list.length ? `<div class="card" style="padding:4px 14px" id="wallet-tx">${list.map(t => `<div class="tx ${t.status==='failed'?'failed':''}">
+          <span class="li-ico" style="color:var(--${t.status==='failed'?'err':t.amount>0?'ok':'blue'})">${I(t.kind==='topup'?'plus':t.kind==='compensation'?'gift':'receipt',18)}</span>
+          <span class="grow"><b style="display:block;font-size:14.5px">${txLabel(t)}${t.orderId?` · ${esc(t.orderId)}`:''}</b>
+            <span class="small muted">${t.bucket==='comp'?tx('رصيد تعويضات','Compensation credit'):tx('رصيد مشحون','Topped-up balance')} · ${fmtTs(t.at)}${t.status==='failed'?' · '+tx('لم تتم','Failed'):''}</span></span>
+          <span class="amt ${t.amount>0&&t.status!=='failed'?'pos':''}">${t.status==='failed'?'—':(t.amount>0?'+ ':'− ')+money(Math.abs(t.amount))}</span></div>`).join('')}</div>`
+        : `<p class="small muted">${tx('لا توجد حركات بعد.','No transactions yet.')}</p>`}
+      <div class="demo-box"><h3>${I('tool',16)} ${tx('أدوات العرض التجريبي','Demo controls')}</h3>
+        <p>${tx('تحاكي فريق الدعم: إرسال عرض تعويض للعميل. لا يُضاف الرصيد إلا بعد قبول العميل.','Simulates the support team sending a compensation offer. Credit is added only after the customer accepts.')}</p>
+        <button class="btn demo" data-a="compOpen" data-v="" id="comp-open">${I('gift',18)} ${tx('إرسال عرض تعويض تجريبي','Send a demo compensation offer')}</button></div>
+      <p class="small muted" style="margin-top:14px">${tx('عند الدفع يُستخدم رصيد التعويضات أولاً ثم الرصيد المشحون (افتراض للنموذج بانتظار الاعتماد).','When paying, compensation credit is used first, then topped-up balance (prototype assumption pending approval).')}</p>
+    </div></main></div>`;
 }
 
 // ---- Price list (reference catalogue — not a cart) -------------------------------
@@ -1006,7 +1225,7 @@ function vPrices(){
     <main class="scroll with-subhead end-space" id="pl-scroll">
       <div class="pl-tools">
         <label class="search">${I('search',20)}<input id="pl-q" type="search" data-plq="1" value="${esc(T.plQuery)}" placeholder="${tx('ابحث عن قطعة، مثل: ثوب أو عباية','Search an item, e.g. thobe or abaya')}" aria-label="${tx('بحث في قائمة الأسعار','Search the price list')}" autocomplete="off"></label>
-        <div class="cat-chips" role="tablist">${chips.map(c=>`<button class="chip ${T.plCat===c.id?'on':''}" data-a="plCat" data-v="${c.id}" role="tab" aria-selected="${T.plCat===c.id}">${c.id==='all'?nm(c):nm(c)}</button>`).join('')}</div>
+        <div class="cat-chips" role="tablist">${chips.map(c=>`<button class="chip ${T.plCat===c.id?'on':''}" data-a="plCat" data-v="${c.id}" role="tab" aria-selected="${T.plCat===c.id}">${nm(c)}</button>`).join('')}</div>
       </div>
       <div class="pad">
         <div class="note" style="margin-top:6px">${I('info',18)}<span>${tx('قائمة للاطلاع فقط — ما تحتاج تختار القطع عند الحجز. السائق يسجّل القطع بعد الاستلام، ويُحسب المبلغ من هذه الأسعار. شمول ضريبة القيمة المضافة قيد التأكيد.','For reference only — you don’t pick items when booking. The driver records your items after pickup and the total is calculated from these prices. Whether prices include VAT is pending confirmation.')}</span></div>
@@ -1030,6 +1249,8 @@ function priceListHtml(){
 }
 
 // ---- Invoices & payment history -------------------------------------------------
+const payMethodLabel = p => p.method === 'wallet' ? tx('المحفظة','Wallet')
+  : (p.walletAmount ? tx('المحفظة + ','Wallet + ') : '') + (p.method === 'apple' ? 'Apple Pay' : tx('بطاقة','Card'));
 function vInvoices(){
   const billed = S.orders.filter(o => o.bill);
   const attempts = S.orders.flatMap(o => (o.payments||[]).map(p => ({...p, orderId:o.id}))).sort((a,b) => b.at - a.at);
@@ -1044,9 +1265,9 @@ function vInvoices(){
     : (attempts.length ? `<div class="list">${attempts.map(p => `
         <button data-a="openInvoice" data-v="${p.orderId}"><span class="li-ico" style="color:var(--${p.status==='succeeded'?'ok':'err'})">${I(p.status==='succeeded'?'check':'alert',18)}</span>
           <span class="grow" style="text-align:start"><b style="display:block;font-size:14.5px">${money(p.amount)}</b>
-          <span class="small muted">${esc(p.orderId)} · ${p.method==='apple'?'Apple Pay':tx('بطاقة','Card')} · ${fmtTs(p.at)}</span></span>
+          <span class="small muted">${esc(p.orderId)} · ${payMethodLabel(p)} · ${fmtTs(p.at)}</span></span>
           <span class="tag ${p.status==='succeeded'?'ok':'err'}">${p.status==='succeeded'?tx('ناجحة','Succeeded'):tx('لم تتم','Failed')}</span></button>`).join('')}</div>
-        <p class="small muted" style="margin-top:10px">${tx('عمليات محاكاة — لم يُخصم أي مبلغ.','Simulated attempts — nothing was charged.')}</p>`
+        <p class="small muted" style="margin-top:10px">${tx('عمليات محاكاة — لم يُخصم أي مبلغ حقيقي.','Simulated attempts — no real money moved.')}</p>`
       : emptyBox('wallet', tx('لا توجد عمليات دفع بعد','No payments yet'), tx('تظهر هنا عمليات الدفع ونتيجتها.','Payment attempts and their results show here.')));
   return `<div class="screen">${subHead(tx('الفواتير وسجل المدفوعات','Invoices & payment history'), tx('بيانات تجريبية','Demo data'))}
     <main class="scroll with-subhead end-space"><div class="pad">
@@ -1057,7 +1278,6 @@ function vInvoices(){
     </div></main></div>`;
 }
 const emptyBox = (ic, t, s) => `<div class="empty enter-u"><div class="ico">${I(ic,32)}</div><b>${t}</b><p class="sub">${s}</p></div>`;
-
 function vInvoice(){
   const o = orderById(S.invoiceId);
   if (!o || !o.bill) return vInvoices();
@@ -1065,9 +1285,9 @@ function vInvoice(){
     <main class="scroll with-subhead ${isUnpaid(o)?'with-fbar':'end-space'}"><div class="pad">
       ${billCard(o)}
       <h2 class="h2">${tx('عمليات الدفع لهذا الطلب','Payments for this order')}</h2>
-      ${(o.payments||[]).length ? `<div class="list">${o.payments.slice().reverse().map(p => `<button disabled style="cursor:default"><span class="li-ico" style="color:var(--${p.status==='succeeded'?'ok':'err'})">${I(p.status==='succeeded'?'check':'alert',18)}</span>
-        <span class="grow" style="text-align:start"><b style="display:block;font-size:14.5px">${money(p.amount)}</b><span class="small muted">${p.method==='apple'?'Apple Pay':tx('بطاقة','Card')} · ${fmtTs(p.at)}</span></span>
-        <span class="tag ${p.status==='succeeded'?'ok':'err'}">${p.status==='succeeded'?tx('ناجحة','Succeeded'):tx('لم تتم','Failed')}</span></button>`).join('')}</div>`
+      ${(o.payments||[]).length ? `<div class="list">${o.payments.slice().reverse().map(p => `<div class="li"><span class="li-ico" style="color:var(--${p.status==='succeeded'?'ok':'err'})">${I(p.status==='succeeded'?'check':'alert',18)}</span>
+        <span class="grow"><b style="display:block;font-size:14.5px">${money(p.amount)}</b><span class="small muted">${payMethodLabel(p)} · ${fmtTs(p.at)}${p.walletAmount&&p.status==='succeeded'?` · ${tx('من المحفظة','from wallet')} ${moneyTxt(p.walletAmount)}`:''}</span></span>
+        <span class="tag ${p.status==='succeeded'?'ok':'err'}">${p.status==='succeeded'?tx('ناجحة','Succeeded'):tx('لم تتم','Failed')}</span></div>`).join('')}</div>`
         : `<p class="small muted">${tx('لا توجد عمليات دفع بعد.','No payment attempts yet.')}</p>`}
       <button class="btn line" data-a="openOrder" data-v="${o.id}" style="margin-top:16px">${tx('تابع طلبك','Track your order')}</button>
     </div></main>
@@ -1123,13 +1343,12 @@ function vBook(){
   const btn = st < 3
     ? `<button class="btn" data-a="next">${S.fromReview ? tx('حفظ ومراجعة','Save & review') : tx('متابعة','Continue')}</button>`
     : `<button class="btn" data-a="submit" ${T.submitting?'disabled':''}>${T.submitting ? `<span class="spin"></span>${tx('جارٍ الإرسال…','Sending…')}` : tx('تأكيد الحجز','Confirm booking')}</button>`;
-  return `<div class="screen">
+  return `<div class="screen" id="book-screen">
     ${bkHead(titles[st-1])}
     <main class="scroll with-head with-fbar" id="scroller"><div class="pad">${body}</div></main>
     <div class="fbar glass strong">${info}${btn}</div>
   </div>`;
 }
-
 function bStep1(){
   const d = S.draft, has = s => d.services.includes(s), err = T.errors.services;
   const pr = d.prefs, chipset = (key, list) => `<div class="chips">${list.map(o=>`<button class="chip ${pr[key]===o.v?'on':''}" data-a="pref" data-v="${key}:${o.v}">${nm(o)}</button>`).join('')}</div>`;
@@ -1138,7 +1357,7 @@ function bStep1(){
     <div class="stack ${err?'shake':''}" role="group" id="svc-group">
       ${CATS.map(c => { const on = has(c.id); return `
         <button class="choice ${on?'on':''}" data-a="toggleSvc" data-v="${c.id}" role="checkbox" aria-checked="${on}">
-          <span class="art">${I(c.icon,26)}</span>
+          <span class="art">${art(c.id)}</span>
           <span class="grow"><b style="display:block;font-size:15.5px">${nm(c)}</b><span class="small muted">${ar()?c.dAr:c.dEn}</span></span>
           <span class="check">${on?I('check',16):''}</span></button>` }).join('')}
     </div>
@@ -1156,11 +1375,10 @@ function bStep1(){
     <div class="field"><textarea class="inp" rows="3" maxlength="300" data-bind="notes" placeholder="${tx('مثال: بقعة على الثوب الأبيض','e.g. Stain on the white thobe')}" aria-label="${tx('ملاحظات','Notes')}">${esc(d.notes)}</textarea>
       <div class="count" id="notes-count">${d.notes.length}/300</div></div>`;
 }
-
 function bStep2(){
   const d = S.draft, ea = T.errors.address, es = T.errors.slot, a = addrById(d.addressId);
-  const days = []; const now = new Date();
-  for (let i = 0; i < 8; i++) days.push(new Date(now.getFullYear(), now.getMonth(), now.getDate()+i));
+  const days = []; const n0 = new Date();
+  for (let i = 0; i < 8; i++) days.push(new Date(n0.getFullYear(), n0.getMonth(), n0.getDate()+i));
   const sl = T.slots;
   let slotsHtml;
   if (sl.loading) slotsHtml = `<div class="slots" aria-busy="true">${Array.from({length:4},()=>'<div class="skel" style="height:56px"></div>').join('')}</div>`;
@@ -1170,9 +1388,8 @@ function bStep2(){
   else slotsHtml = `<div class="slots ${es?'shake':''}" role="radiogroup">${sl.list.map(s=>`
       <button class="slot ${d.slot===s.id?'on':''}" data-a="slot" data-v="${s.id}" ${s.left<=0?'disabled':''} role="radio" aria-checked="${d.slot===s.id}">
         <span class="tm">${fmtSlot(s.id)}</span><span class="lf">${s.left<=0 ? (s.past?tx('غير متاح','Unavailable'):tx('مكتمل','Full')) : s.left===1?tx('آخر موعد','1 left'):tx('متاح','Available')}</span></button>`).join('')}</div>`;
-  const monthLabel = fmt(parseYmd(d.date || ymd(now)), {month:'long', year:'numeric'});
-  return `
-    <h2 class="h2" style="margin-top:8px">${tx('موقع الاستلام','Pickup location')}</h2>
+  const monthLabel = fmt(parseYmd(d.date || ymd(n0)), {month:'long', year:'numeric'});
+  const locBlock = S.addresses.length ? `
     <div class="loc-card ${ea?'shake':''}" id="addr-group">
       <div class="map">${MAP_ART}<span class="pin">${I('pin',34)}</span><span class="map-cap glass">${tx('معاينة — الخريطة لاحقاً','Preview — map comes later')}</span></div>
       <div class="addr-line">${I('home',20)}<span class="grow">${a ? `<b style="display:block">${esc(addrType(a.type))}</b><span class="small" style="color:var(--ink-2)"><bdi>${esc(addrLine(a))}</bdi></span>` : `<span class="muted">${tx('اختر عنواناً','Choose an address')}</span>`}</span></div>
@@ -1181,11 +1398,16 @@ function bStep2(){
       ${S.addresses.map(x=>`<button class="achip ${d.addressId===x.id?'on':''}" data-a="pickAddrBk" data-v="${x.id}" role="radio" aria-checked="${d.addressId===x.id}">
         ${I(x.type==='work'?'box':x.type==='home'?'home':'pin',18)}<b>${esc(addrType(x.type))}</b><span><bdi>${esc(x.district)}</bdi></span></button>`).join('')}
       <button class="achip add" data-a="addAddr">${I('plus',20)}${tx('إضافة عنوان','Add address')}</button>
-    </div>
-    ${ea ? `<div class="err-msg">${I('alert',16)} ${tx('اختر عنوان الاستلام','Choose a pickup address')}</div>` : ''}
+    </div>`
+    : `<div class="empty-addr ${ea?'shake':''}" id="addr-group">${I('pin',28)}<b>${tx('أضف عنوان الاستلام','Add your pickup address')}</b>
+        <span class="small muted">${tx('نحتاج العنوان مرة وحدة، ويُحفظ لطلباتك الجاية.','We only need it once — it’s saved for next time.')}</span>
+        <button class="btn sm" data-a="addAddr" id="add-first-addr">${I('plus',18)} ${tx('إضافة عنوان','Add address')}</button></div>`;
+  return `
+    <h2 class="h2" style="margin-top:8px">${tx('موقع الاستلام','Pickup location')}</h2>
+    ${locBlock}
+    ${ea ? `<div class="err-msg">${I('alert',16)} ${S.addresses.length?tx('اختر عنوان الاستلام','Choose a pickup address'):tx('أضف عنوان الاستلام للمتابعة','Add a pickup address to continue')}</div>` : ''}
     <div class="field" style="margin-top:14px"><label for="dn">${tx('وين بنلقى الكيس؟','Where will we find the bag?')} <span class="opt">(${tx('اختياري','optional')})</span></label>
       <input id="dn" class="inp" data-bind="bagSpot" maxlength="150" value="${esc(d.bagSpot)}" placeholder="${tx('مثال: عند باب الشقة، الدور الثاني.','e.g. At the apartment door, second floor.')}" autocomplete="off"></div>
-
     <h2 class="h2" id="time-h">${tx('موعد الاستلام','Pickup time')}</h2>
     <div class="cal">
       <div class="mon">${monthLabel}</div>
@@ -1201,8 +1423,6 @@ function bStep2(){
     <div class="chips">${REPEAT.map(r=>`<button class="chip ${d.repeat===r.v?'on':''}" data-a="repeat" data-v="${r.v}">${nm(r)}</button>`).join('')}</div>
     ${d.repeat!=='none' && d.date && d.slot ? `<p class="small muted enter-u" style="margin:10px 0 0">${tx(`نستلم ${nm(REPEAT.find(r=>r.v===d.repeat))} يوم ${fmt(parseYmd(d.date),{weekday:'long'})}، ${fmtSlot(d.slot)}. تقدر توقفه متى ما بغيت.`, `We’ll pick up ${nm(REPEAT.find(r=>r.v===d.repeat)).toLowerCase()} on ${fmt(parseYmd(d.date),{weekday:'long'})}, ${fmtSlot(d.slot)}. You can stop it anytime.`)}</p>` : ''}`;
 }
-
-// Optional preferred delivery time — a REQUEST, not a confirmed slot.
 function deliveryDays(){
   const d = S.draft; if (!d.date) return [];
   const p = parseYmd(d.date), out = [];
@@ -1238,7 +1458,6 @@ function deliveryBlock(){
 const deliveryText = o => o.deliveryMode === 'now' && o.dDate && o.dSlot
   ? `${fmt(parseYmd(o.dDate),{weekday:'long', day:'numeric', month:'long'})} · ${fmtSlot(o.dSlot)} <span class="tag warn" style="margin-inline-start:4px">${tx('طلب — غير مؤكد','Request — not confirmed')}</span>`
   : tx('يُؤكَّد بعد الاستلام','Confirmed after pickup');
-
 function bStep3(){
   const d = S.draft, a = addrById(d.addressId);
   const pf = k => nm(PREFS[k].find(o=>o.v===d.prefs[k]));
@@ -1270,7 +1489,6 @@ function bStep3(){
     </div>
     <p class="small muted" style="text-align:center;margin-top:14px">${tx('حجز تجريبي — لن يُرسل إلى المغسلة.','Simulated booking — it won’t be sent to the laundry.')}</p>`;
 }
-
 function vSuccess(){
   const o = orderById(S.orderId);
   return `<div class="screen" style="padding-top:var(--sat)">
@@ -1292,7 +1510,6 @@ function vSuccess(){
 }
 
 // ---- Order detail ------------------------------------------------------------------
-// Payment-success supporting copy depends on the order stage at the time it is shown.
 function paidCopy(o){
   if (o.status >= DELIVERED) return tx('وصلت النظافة لبابك، شكرًا لاختيارك ذا كلينر.','Clean clothes, delivered to your door. Thanks for choosing The Cleaner.');
   if (o.status === OUT_FOR_DELIVERY) return tx('طلبك بالطريق، تابع حالة التوصيل من هنا.','Your order is on its way — follow the delivery here.');
@@ -1317,6 +1534,7 @@ function stateCard(o){
 function vOrder(){
   const o = orderById(S.orderId); const a = o.address;
   const locked = isUnpaid(o) || (o.payment === 'none' && o.status < OUT_FOR_DELIVERY);
+  const offers = S.wallet.offers.filter(x => x.orderId === o.id && x.status === 'pending');
   return `<div class="screen">
     <header class="bk-head glass strong">
       <button class="circle" data-a="closeOrder" aria-label="${tx('رجوع','Back')}">${I('back',22,'flip')}</button>
@@ -1326,6 +1544,8 @@ function vOrder(){
       <div class="status-line" style="margin:4px 0 12px"><span class="tag blue" id="progress-tag">${nm(STEPS[o.status])}</span>
         ${PAY[o.payment] ? `<span class="tag ${PAY[o.payment].cls}" id="payment-tag">${nm(PAY[o.payment])}</span>` : ''}</div>
       ${stateCard(o)}
+      <button class="help-btn" data-a="helpOpen" data-v="${o.id}" id="help-open">${I('chat',22)}<span class="grow" style="text-align:start">${tx('تحتاج مساعدة؟','Need help?')}</span>${chevF(18)}</button>
+      ${offers.map(x => `<button class="offer row" data-a="openWallet" style="width:100%;margin-top:12px;text-align:start">${I('gift',22)}<span class="grow"><b style="display:block">${tx('لديك عرض تعويض','You have a compensation offer')} · ${money(x.amount)}</b><span class="small muted">${tx('راجعه واقبله من المحفظة','Review and accept it in your wallet')}</span></span>${chevF(18)}</button>`).join('')}
       ${o.bill ? `<div style="margin-top:14px">${billCard(o)}</div>`
         : `<div class="amount-card" style="margin-top:14px"><div class="big" style="font-size:15.5px">${tx('يظهر المبلغ بعد الاستلام وعدّ القطع','The amount appears after pickup and item count')}</div>
             <span class="small muted">${tx('السائق يسجّل القطع بعد استلام الكيس، ويُحسب المبلغ من قائمة الأسعار.','The driver records the items after collecting the bag; the amount is calculated from the price list.')}</span></div>`}
@@ -1342,25 +1562,20 @@ function vOrder(){
         ${o.repeat!=='none'?`<div class="row" style="gap:8px;margin-top:6px">${I('repeat',18)} ${nm(REPEAT.find(r=>r.v===o.repeat))}</div>`:''}
         <div class="row" style="gap:8px;margin-top:6px;align-items:flex-start;flex-wrap:wrap">${I('truck',18)} <span>${tx('التسليم','Delivery')}: ${deliveryText(o)}</span></div>
       </div>
-      <h2 class="h2">${tx('تحتاج مساعدة؟','Need help?')}</h2>
-      <div class="list">
-        <button data-a="soon"><span class="li-ico">${I('chat',20)}</span><span class="grow" style="text-align:start">${tx('تواصل مع الدعم','Contact support')}</span>${chevF(18)}</button>
-        ${o.bill?`<button data-a="openInvoice" data-v="${o.id}"><span class="li-ico">${I('receipt',20)}</span><span class="grow" style="text-align:start">${tx('الفاتورة','Invoice')}</span>${chevF(18)}</button>`:''}
-      </div>
+      ${o.bill?`<div class="list" style="margin-top:14px"><button data-a="openInvoice" data-v="${o.id}"><span class="li-ico">${I('receipt',20)}</span><span class="grow" style="text-align:start">${tx('الفاتورة','Invoice')}</span>${chevF(18)}</button></div>`:''}
       ${demoTools(o)}
     </div></main>
     ${isUnpaid(o) ? payBar(o) : ''}
   </div>`;
 }
-// Demo-only controls, visually separated from the customer journey.
 function demoTools(o){
   const next = o.status < DELIVERED ? STEPS[o.status + 1] : null;
   let btns = '';
   if (!o.bill && o.status <= 3) btns += `<button class="btn demo" data-a="driverOpen" data-v="${o.id}" id="demo-collect">${I('tool',18)} ${o.status===0?tx('محاكاة استلام السائق وتسجيل القطع','Simulate driver pickup & item entry'):tx('محاكاة تسجيل القطع','Simulate item entry')}</button>`;
   if (o.bill && next) btns += `<button class="btn demo" data-a="advance" data-v="${o.id}" id="demo-advance">${I('tool',18)} ${tx('نقل الطلب إلى','Move order to')}: ${nm(next)}</button>`;
-  if (!btns) return '';
+  btns += `<button class="btn demo" data-a="compOpen" data-v="${o.id}" id="demo-comp">${I('gift',18)} ${tx('إرسال عرض تعويض لهذا الطلب','Send a compensation offer for this order')}</button>`;
   return `<div class="demo-box"><h3>${I('tool',16)} ${tx('أدوات العرض التجريبي','Demo controls')}</h3>
-    <p>${tx('ليست جزءاً من تطبيق العميل — تحاكي تطبيق السائق والمغسلة لعرض الرحلة كاملة.','Not part of the customer app — simulates the driver and laundry to demonstrate the full journey.')}</p>
+    <p>${tx('ليست جزءاً من تطبيق العميل — تحاكي تطبيق السائق والمغسلة والدعم لعرض الرحلة كاملة.','Not part of the customer app — simulates the driver, laundry and support team to demonstrate the full journey.')}</p>
     <div class="stack" style="gap:8px">${btns}</div></div>`;
 }
 
@@ -1371,10 +1586,10 @@ function sheet(title, body, foot, opts={}){
     <div class="sheet-b">${body}</div>${foot?`<div class="sheet-f">${foot}</div>`:''}</div></div>`;
 }
 function shPickAddr(){
-  const cur = addrById(S.currentAddressId);
+  const cur = addrById(S.currentAddressId) || S.addresses[0];
   return sheet(tx('حدد موقع الاستلام','Choose pickup location'), `
-    <div class="loc-card" style="background:#fff"><div class="map">${MAP_ART}<span class="pin">${I('pin',34)}</span></div>
-      <div class="addr-line">${I('home',20)}<span class="grow"><b style="display:block">${esc(addrType(cur.type))}</b><span class="small" style="color:var(--ink-2)"><bdi>${esc(addrLine(cur))}</bdi></span></span></div></div>
+    ${cur ? `<div class="loc-card" style="background:#fff"><div class="map">${MAP_ART}<span class="pin">${I('pin',34)}</span></div>
+      <div class="addr-line">${I('home',20)}<span class="grow"><b style="display:block">${esc(addrType(cur.type))}</b><span class="small" style="color:var(--ink-2)"><bdi>${esc(addrLine(cur))}</bdi></span></span></div></div>` : ''}
     <div class="addr-chips" role="radiogroup" style="margin-inline:0;padding-inline:0">
       ${S.addresses.map(x=>`<button class="achip ${S.currentAddressId===x.id?'on':''}" data-a="setCurAddr" data-v="${x.id}" role="radio" aria-checked="${S.currentAddressId===x.id}">
         ${I(x.type==='work'?'box':x.type==='home'?'home':'pin',18)}<b>${esc(addrType(x.type))}</b><span><bdi>${esc(x.district)}</bdi></span></button>`).join('')}
@@ -1395,7 +1610,7 @@ function shAddr(){
     ${fld('details', tx('تفاصيل إضافية','More details'), tx('الشقة، الدور، علامة مميزة','Flat, floor, landmark'), true)}
     ${fld('note', tx('تعليمات للسائق','Driver instructions'), tx('مثال: البوابة الجانبية','e.g. Side gate'), true)}
     <div class="note" style="margin-top:16px;background:#fff">${I('pin',18)}<span>${tx('تحديد الموقع على الخريطة يُضاف مع الربط بالخادم للتحقق من نطاق الخدمة.','Map pin and service-area check will be added with the backend integration.')}</span></div>`,
-    `<button class="btn" data-a="saveAddr">${tx('حفظ العنوان','Save address')}</button>`);
+    `<button class="btn" data-a="saveAddr" id="save-addr">${tx('حفظ العنوان','Save address')}</button>`);
 }
 function shPrefs(){
   const pr = S.prefs, row = (key, label) => `<span class="flabel" style="margin-top:16px">${label}</span><div class="chips">${PREFS[key].map(o=>`<button class="chip ${pr[key]===o.v?'on':''}" data-a="profPref" data-v="${key}:${o.v}">${nm(o)}</button>`).join('')}</div>`;
@@ -1403,43 +1618,128 @@ function shPrefs(){
     ${row('shirts', tx('الثياب والقمصان','Thobes & shirts'))}${row('scent', tx('العطر','Fragrance'))}${row('starch', tx('النشا','Starch'))}`,
     `<button class="btn" data-a="closeSheet" data-v="prefsSaved">${tx('تم','Done')}</button>`);
 }
-// Simulated payment — no real card data, no gateway.
+function shSignout(){
+  return sheet(tx('تسجيل الخروج','Sign out'), `<p class="sub" style="margin:4px 0 0">${tx('بيانات حسابك التجريبية تبقى محفوظة على هذا الجهاز، وترجع لها لما تدخل بنفس الرقم.','Your demo account data stays on this device; sign in with the same number to come back to it.')}</p>`,
+    `<button class="btn" data-a="signOut" id="confirm-signout">${tx('تسجيل الخروج','Sign out')}</button><button class="btn line" data-a="closeSheet">${tx('إلغاء','Cancel')}</button>`);
+}
+// Order help: reasons by stage → optional details → prepared WhatsApp/email composer. Nothing is sent automatically.
+function helpMessage(o, r, details){
+  const lines = ar()
+    ? ['السلام عليكم، أحتاج مساعدة بخصوص طلبي في ذا كلينر.', `رقم الطلب: ${o.id}`, `السبب: ${r.ar}`]
+    : ['Hello, I need help with my The Cleaner order.', `Order: ${o.id}`, `Reason: ${r.en}`];
+  if (details.trim()) lines.push((ar() ? 'التفاصيل: ' : 'Details: ') + details.trim());
+  return lines.join('\n');
+}
+const helpSubject = (o, r) => ar() ? `طلب مساعدة · ${o.id} · ${r.ar}` : `Help request · ${o.id} · ${r.en}`;
+function helpLinks(){
+  const H = T.help, o = orderById(H.orderId), r = HELP_REASONS.find(x => x.v === H.reason), ch = supportChannels();
+  if (!r) return { wa:null, mail:null, msg:'' };
+  const msg = helpMessage(o, r, H.details);
+  return { msg,
+    wa: ch.wa ? `https://wa.me/${ch.wa}?text=${encodeURIComponent(msg)}` : null,
+    mail: ch.email ? `mailto:${ch.email}?subject=${encodeURIComponent(helpSubject(o, r))}&body=${encodeURIComponent(msg.replace(/\n/g, '\r\n'))}` : null };
+}
+function shHelp(){
+  const H = T.help, o = orderById(H.orderId), ch = supportChannels();
+  const reasons = HELP_REASONS.filter(r => r.when(o));
+  const L = helpLinks();
+  const actions = !H.reason ? `<p class="small muted" style="margin:0;text-align:center">${tx('اختر السبب أولاً.','Choose a reason first.')}</p>`
+    : (ch.wa || ch.email) ? `${ch.wa ? `<a class="btn wa" href="${esc(L.wa)}" target="_blank" rel="noopener" data-a="helpOpened" data-v="wa" id="help-wa">${I('wa',20)} ${tx('تواصل عبر واتساب','Contact on WhatsApp')}</a>` : ''}
+        ${ch.email ? `<a class="btn line" href="${esc(L.mail)}" data-a="helpOpened" data-v="email" id="help-mail">${I('mail',20)} ${tx('أرسل إيميل','Send an email')}</a>` : ''}`
+    : `<div class="note" id="help-empty">${I('info',18)}<span>${tx('قنوات الدعم غير متاحة بعد في هذه النسخة. تقدر تنسخ الرسالة وترسلها لاحقاً.','Support channels aren’t available in this version yet. You can copy the message and send it later.')}</span></div>
+       <button class="btn line" data-a="helpCopy">${tx('نسخ نص الرسالة','Copy message text')}</button>`;
+  return sheet(tx('تحتاج مساعدة؟','Need help?'), `
+    <p class="sub" style="margin:0 0 10px">${tx('طلب','Order')} <b class="num" style="color:var(--ink)">${esc(o.id)}</b> · ${tx('وش المشكلة؟','What’s the issue?')}</p>
+    <div class="stack" role="radiogroup" id="help-reasons" style="gap:8px">${reasons.map(r => `<button class="reason ${H.reason===r.v?'on':''}" data-a="helpReason" data-v="${r.v}" role="radio" aria-checked="${H.reason===r.v}"><span class="radio"></span><span class="grow">${nm(r)}</span></button>`).join('')}</div>
+    ${H.reason ? `<div class="field" style="margin-top:14px"><label for="help-details">${tx('تفاصيل إضافية','More details')} <span class="opt">(${tx('اختياري','optional')})</span></label>
+      <textarea id="help-details" class="inp" rows="3" maxlength="500" data-help="details" placeholder="${tx('اكتب أي تفاصيل تساعدنا','Anything that helps us understand')}">${esc(H.details)}</textarea></div>
+      <span class="flabel" style="margin-top:12px">${tx('الرسالة اللي بتجهز','Message to be prepared')}</span><div class="msg-preview" id="help-preview">${esc(L.msg)}</div>
+      <p class="small muted" style="margin:8px 0 0">${tx('تفتح الرسالة في واتساب أو البريد لتراجعها وترسلها بنفسك. لا نرسل شيء تلقائياً، ولا يتغير طلبك أو المبلغ أو رصيدك بمجرد إرسالها.','The message opens in WhatsApp or email for you to review and send yourself. Nothing is sent automatically, and your order, amount or balance doesn’t change just by sending it.')}</p>` : ''}
+    ${H.opened ? `<div class="note ok" role="status" style="margin-top:12px" id="help-opened">${I('info',18)}<span>${H.opened==='wa' ? tx('فتحنا واتساب برسالة جاهزة. راجعها واضغط إرسال من هناك — ما أرسلنا شيء نيابة عنك.','We opened WhatsApp with a ready message. Review it and tap send there — we haven’t sent anything for you.') : tx('فتحنا البريد برسالة جاهزة. راجعها وأرسلها من هناك — ما أرسلنا شيء نيابة عنك.','We opened your email app with a ready message. Review and send it there — we haven’t sent anything for you.')}</span></div>` : ''}`,
+    actions);
+}
+// Simulated payment — wallet first (optional), remainder via simulated Apple Pay/card.
+function payPlan(P_, o){
+  const b = walletBal(), total = o.bill.total;
+  const walletPart = P_.useWallet ? Math.min(b.total, total) : 0;
+  return { total, walletPart, ext: total - walletPart, avail: b.total };
+}
 function shPay(){
   const P_ = T.pay, o = orderById(P_.orderId), busy = P_.state === 'processing';
-  if (P_.state === 'success') return sheet(tx('تم الدفع','Payment complete'), `
+  if (P_.state === 'success') { const pl = P_.done; return sheet(tx('تم الدفع','Payment complete'), `
     <div style="text-align:center;padding:10px 0 4px" id="pay-success">
       <div class="done-ring"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
       <h2 style="font-size:21px;margin:18px 0 6px">${tx('تم الدفع، يعطيك العافية','Payment done — thank you')}</h2>
       <p class="sub" id="pay-success-copy" style="margin:0 auto 12px;max-width:300px">${paidCopy(o)}</p>
       <div class="card tint small" style="text-align:start"><div class="kv"><span class="muted">${tx('الطلب','Order')}</span><span>${esc(o.id)}</span></div>
         <div class="kv"><span class="muted">${tx('المبلغ المدفوع','Amount paid')}</span><span>${money(o.bill.total)}</span></div>
-        <div class="kv"><span class="muted">${tx('الطريقة','Method')}</span><span>${P_.method==='apple'?'Apple Pay':tx('بطاقة','Card')} (${tx('محاكاة','simulated')})</span></div></div>
-    </div>`, `<button class="btn" data-a="paySuccessDone">${tx('تابع طلبك','Track your order')}</button>`);
+        ${pl.walletPart ? `<div class="kv"><span class="muted">${tx('من المحفظة','From wallet')}</span><span id="paid-wallet">${money(pl.walletPart)}</span></div>` : ''}
+        ${pl.ext ? `<div class="kv"><span class="muted">${P_.method==='apple'?'Apple Pay':tx('بطاقة','Card')}</span><span id="paid-ext">${money(pl.ext)} (${tx('محاكاة','simulated')})</span></div>` : ''}</div>
+    </div>`, `<button class="btn" data-a="paySuccessDone">${tx('تابع طلبك','Track your order')}</button>`) }
+  const pl = payPlan(P_, o);
   const meth = (v, label, sub, badge) => `<button class="method ${P_.method===v?'on':''}" data-a="payMethod" data-v="${v}" role="radio" aria-checked="${P_.method===v}" ${busy?'disabled':''}>
     <span class="radio"></span><span class="grow"><b style="display:block;font-size:15px">${label}</b><span class="small muted">${sub}</span></span>${badge}</button>`;
   return sheet(tx('الدفع — تجريبي','Payment — demo'), `
     <div class="note warn">${I('info',18)}<span>${tx('شاشة دفع تجريبية: لا يُخصم أي مبلغ، ولا يوجد اتصال ببوابة دفع، ولا نطلب بيانات بطاقة.','Demo payment screen: nothing is charged, no payment gateway is connected, and no card details are requested.')}</span></div>
-    <div class="pay-amt"><span class="small muted">${tx('المبلغ المستحق','Amount due')} · ${esc(o.id)}</span><b>${money(o.bill.total)}</b></div>
-    <div class="stack" role="radiogroup">
+    <div class="pay-amt"><span class="small muted">${tx('المبلغ المستحق','Amount due')} · ${esc(o.id)}</span><b>${money(pl.total)}</b></div>
+    <button class="row method ${P_.useWallet?'on':''}" data-a="payWallet" role="switch" aria-checked="${!!P_.useWallet}" id="pay-use-wallet" ${busy||!pl.avail?'disabled':''} style="margin-bottom:10px">
+      <span class="li-ico" style="background:#fff">${I('wallet',20)}</span><span class="grow"><b style="display:block;font-size:15px">${tx('استخدم رصيد المحفظة','Use wallet balance')}</b>
+      <span class="small muted">${tx('المتاح','Available')}: ${money(pl.avail)}</span></span><span class="toggle ${P_.useWallet?'on':''}"></span></button>
+    ${P_.useWallet && pl.walletPart ? `<div class="card tint small" id="pay-split" style="margin-bottom:10px"><div class="kv"><span class="muted">${tx('من المحفظة','From wallet')}</span><span>${money(pl.walletPart)}</span></div>
+      <div class="kv"><span class="muted">${tx('المتبقي','Remaining')}</span><span>${money(pl.ext)}</span></div></div>` : ''}
+    ${pl.ext ? `<div class="stack" role="radiogroup">
       ${meth('apple', 'Apple Pay', tx('محاكاة','Simulated'), '<span class="ap">Apple Pay</span>')}
       ${meth('card', tx('بطاقة','Card'), tx('بطاقة تجريبية — بدون إدخال بيانات','Demo card — no details entered'), `<span class="li-ico">${I('card',18)}</span>`)}
-    </div>
-    ${P_.state === 'failed' ? `<div class="note err enter-u" role="alert" style="margin-top:12px" id="pay-failed">${I('alert',18)}<span>${tx('ما تمت عملية الدفع، وما انخصم أي مبلغ. حاول مرة ثانية أو اختر طريقة أخرى.','The payment didn’t go through and nothing was charged. Try again or choose another method.')}</span></div>` : ''}
-    <div class="demo-box" style="margin-top:14px"><h3>${I('tool',16)} ${tx('نتيجة المحاكاة','Simulated result')}</h3>
+    </div>` : `<div class="note ok">${I('check',18)}<span>${tx('رصيد المحفظة يغطي كامل المبلغ.','Your wallet balance covers the full amount.')}</span></div>`}
+    ${P_.state === 'failed' ? `<div class="note err enter-u" role="alert" style="margin-top:12px" id="pay-failed">${I('alert',18)}<span>${tx('ما تمت عملية الدفع، وما انخصم أي مبلغ — لا من بطاقتك ولا من محفظتك. حاول مرة ثانية أو اختر طريقة أخرى.','The payment didn’t go through and nothing was charged — not your card and not your wallet. Try again or choose another method.')}</span></div>` : ''}
+    ${pl.ext ? `<div class="demo-box" style="margin-top:14px"><h3>${I('tool',16)} ${tx('نتيجة المحاكاة','Simulated result')}</h3>
       <div class="seg" style="background:#fff">
         <button class="${P_.outcome==='success'?'on':''}" data-a="payOutcome" data-v="success" ${busy?'disabled':''}>${tx('نجاح','Success')}</button>
-        <button class="${P_.outcome==='fail'?'on':''}" data-a="payOutcome" data-v="fail" ${busy?'disabled':''}>${tx('فشل','Failure')}</button></div></div>`,
-    `<button class="btn" data-a="payConfirm" id="pay-confirm" ${busy?'disabled':''}>${busy ? `<span class="spin"></span>${tx('جارٍ المعالجة…','Processing…')}` : payLabel(o.bill.total)}</button>`,
+        <button class="${P_.outcome==='fail'?'on':''}" data-a="payOutcome" data-v="fail" ${busy?'disabled':''}>${tx('فشل','Failure')}</button></div></div>` : ''}`,
+    `<button class="btn" data-a="payConfirm" id="pay-confirm" ${busy?'disabled':''}>${busy ? `<span class="spin"></span>${tx('جارٍ المعالجة…','Processing…')}` : payLabel(pl.total)}</button>`,
     { lockClose: busy });
 }
-// Demo driver app: records items from the catalogue; total is computed, never typed.
+function shTopup(){
+  const P_ = T.topup, busy = P_.state === 'processing', er = T.errors.topup;
+  const amount = P_.custom !== '' ? Math.round(parseFloat(P_.custom) * 100) : P_.amount;
+  if (P_.state === 'success') return sheet(tx('تم الشحن','Top-up complete'), `<div style="text-align:center;padding:10px 0" id="topup-success">
+      <div class="done-ring"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+      <h2 style="font-size:20px;margin:16px 0 6px">${tx('أُضيف الرصيد لمحفظتك','Balance added to your wallet')}</h2>
+      <p class="sub" style="margin:0">${money(P_.done)} · ${tx('شحن تجريبي','Demo top-up')}</p></div>`, `<button class="btn" data-a="closeSheet">${tx('تم','Done')}</button>`);
+  return sheet(tx('شحن الرصيد — تجريبي','Top up — demo'), `
+    <div class="note warn">${I('info',18)}<span>${tx('شحن تجريبي: لا تُسحب أموال حقيقية ولا نطلب بيانات بطاقة.','Demo top-up: no real money is taken and no card details are requested.')}</span></div>
+    <span class="flabel" style="margin-top:14px">${tx('المبلغ','Amount')}</span>
+    <div class="chips">${WALLET_CFG.topups.map(v => `<button class="chip ${P_.custom===''&&P_.amount===v?'on':''}" data-a="topupAmt" data-v="${v}" ${busy?'disabled':''}>${moneyTxt(v)}</button>`).join('')}</div>
+    <div class="field ${er?'has-err':''}" style="margin-top:12px"><label for="topup-custom">${tx('مبلغ آخر (ر.س)','Other amount (SAR)')}</label>
+      <input id="topup-custom" class="inp" data-topup="custom" inputmode="decimal" value="${esc(P_.custom)}" placeholder="${tx('من 10 إلى 2,000','10 to 2,000')}" ${busy?'disabled':''}>
+      ${er?`<div class="err-msg">${I('alert',16)} ${tx('أدخل مبلغاً من 10 إلى 2,000 ر.س','Enter an amount from SAR 10 to 2,000')}</div>`:''}</div>
+    <div class="stack" style="margin-top:12px" role="radiogroup">
+      <button class="method ${P_.method==='apple'?'on':''}" data-a="topupMethod" data-v="apple" ${busy?'disabled':''}><span class="radio"></span><span class="grow"><b>Apple Pay</b> <span class="small muted">· ${tx('محاكاة','simulated')}</span></span><span class="ap">Apple Pay</span></button>
+      <button class="method ${P_.method==='card'?'on':''}" data-a="topupMethod" data-v="card" ${busy?'disabled':''}><span class="radio"></span><span class="grow"><b>${tx('بطاقة','Card')}</b> <span class="small muted">· ${tx('تجريبية','demo')}</span></span><span class="li-ico">${I('card',18)}</span></button></div>
+    ${P_.state === 'failed' ? `<div class="note err" role="alert" style="margin-top:12px" id="topup-failed">${I('alert',18)}<span>${tx('ما تم الشحن، وما تغيّر رصيدك. حاول مرة ثانية.','The top-up didn’t go through and your balance didn’t change. Try again.')}</span></div>` : ''}
+    <div class="demo-box" style="margin-top:14px"><h3>${I('tool',16)} ${tx('نتيجة المحاكاة','Simulated result')}</h3>
+      <div class="seg" style="background:#fff"><button class="${P_.outcome==='success'?'on':''}" data-a="topupOutcome" data-v="success" ${busy?'disabled':''}>${tx('نجاح','Success')}</button>
+        <button class="${P_.outcome==='fail'?'on':''}" data-a="topupOutcome" data-v="fail" ${busy?'disabled':''}>${tx('فشل','Failure')}</button></div></div>`,
+    `<button class="btn" data-a="topupConfirm" id="topup-confirm" ${busy?'disabled':''}>${busy?`<span class="spin"></span>${tx('جارٍ المعالجة…','Processing…')}`:tx('اشحن','Top up') + (amount>0&&!isNaN(amount)?' · '+moneyTxt(amount):'')}</button>`, { lockClose: busy });
+}
+function shComp(){
+  const C = T.comp;
+  return sheet(tx('عرض تعويض — أداة عرض','Compensation offer — demo tool'), `
+    <div class="note warn">${I('tool',18)}<span>${tx('تحاكي إجراء فريق الدعم. يظهر العرض للعميل، ولا يُضاف الرصيد إلا بعد قبوله.','Simulates a support-team action. The customer sees the offer; credit is added only after they accept.')}</span></div>
+    ${C.orderId ? `<p class="small muted" style="margin:10px 0 0">${tx('الطلب','Order')}: ${esc(C.orderId)}</p>` : ''}
+    <span class="flabel" style="margin-top:14px">${tx('المبلغ','Amount')}</span>
+    <div class="chips">${WALLET_CFG.comp.map(v => `<button class="chip ${C.amount===v?'on':''}" data-a="compAmt" data-v="${v}">${moneyTxt(v)}</button>`).join('')}</div>
+    <span class="flabel" style="margin-top:14px">${tx('السبب','Reason')}</span>
+    <div class="chips">${COMP_REASONS.map(r => `<button class="chip ${C.reason===r.v?'on':''}" data-a="compReason" data-v="${r.v}">${nm(r)}</button>`).join('')}</div>`,
+    `<button class="btn demo" data-a="compSend" id="comp-send">${I('gift',18)} ${tx('إرسال العرض للعميل','Send offer to customer')}</button>`, { cls:'demo-sheet' });
+}
 function shDriver(){
   const D = T.driver, o = orderById(D.orderId), bill = computeBill(D.lines, S.demo.tax);
   const opts = CATS.map(c => `<optgroup label="${esc(nm(c))}">${CATALOGUE.filter(i=>i.cat===c.id).map(i=>`<option value="${i.id}">${esc(itemName(i))} — ${i.assess?tx('السعر عند التقييم','Price on assessment'):moneyTxt(i.price)}</option>`).join('')}</optgroup>`).join('');
   return sheet(tx('محاكاة السائق — تسجيل القطع','Driver simulation — item entry'), `
     <div class="note warn">${I('tool',18)}<span>${tx('أداة عرض فقط تحاكي تطبيق السائق، وليست جزءاً من تطبيق العميل. الأسعار من قائمة الأسعار، والمبلغ يُحسب تلقائياً.','Demo tool that simulates the driver app — not part of the customer app. Prices come from the price list; the total is calculated automatically.')}</span></div>
     <div class="small muted" style="margin:10px 0 2px">${esc(o.id)} · ${svcNames(o)}</div>
-    ${D.lines.length ? D.lines.map(l => { const it = ITEM[l.id]; return `<div class="item-row" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)">
+    ${D.lines.length ? D.lines.map(l => { const it = ITEM[l.id]; return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)">
       <span class="grow"><b style="display:block;font-size:14.5px">${esc(itemName(it))}</b><span class="small muted">${nm(CAT[it.cat])} · ${it.assess?tx('السعر عند التقييم','Price on assessment'):money(it.price)}</span></span>
       <div class="stepper"><button data-a="drvQty" data-v="${l.id}:-1" aria-label="${tx('إنقاص','Decrease')}">${I('minus',18)}</button><output>${l.qty}</output>
         <button data-a="drvQty" data-v="${l.id}:1" ${l.qty>=50?'disabled':''} aria-label="${tx('زيادة','Increase')}">${I('plus',18)}</button></div></div>` }).join('')
@@ -1463,48 +1763,63 @@ function shRate(){
     `<button class="btn" data-a="rateSubmit" ${r.n?'':'disabled'}>${tx('إرسال التقييم','Submit rating')}</button>`);
 }
 function shDemo(){
-  const tg = (k, label, desc) => `<button class="row" data-a="demo" data-v="${k}" role="switch" aria-checked="${!!S.demo[k]}" style="width:100%;min-height:58px;padding:6px 0">
-    <span class="grow" style="text-align:start"><span style="display:block;font-weight:600;font-size:14.5px">${label}</span><span class="small muted">${desc}</span></span><span class="toggle ${S.demo[k]?'on':''}"></span></button>`;
+  const tg = (k, label, desc, on) => `<button class="row" data-a="demo" data-v="${k}" role="switch" aria-checked="${!!on}" style="width:100%;min-height:58px;padding:6px 0">
+    <span class="grow" style="text-align:start"><span style="display:block;font-weight:600;font-size:14.5px">${label}</span><span class="small muted">${desc}</span></span><span class="toggle ${on?'on':''}"></span></button>`;
   const ao = activeOrder(), chk = catalogueCheck();
   return sheet(tx('إعدادات النسخة التجريبية','Prototype settings'), `
-    <div class="note warn">${I('info',18)}<span>${tx('كل البيانات وهمية. لا يتم إرسال حجوزات أو مدفوعات حقيقية ولا يوجد اتصال فعلي بـ CleanCloud أو Wafeq أو بوابة الدفع.','All data is mock data. No real bookings or payments are sent, and nothing is connected to CleanCloud, Wafeq or a payment gateway.')}</span></div>
+    <div class="note warn">${I('info',18)}<span>${tx('كل البيانات وهمية. لا رسائل SMS ولا حجوزات أو مدفوعات أو محفظة حقيقية، ولا اتصال بـ CleanCloud أو Wafeq أو بوابة الدفع.','All data is mock data. No SMS, real bookings, payments or wallet, and nothing is connected to CleanCloud, Wafeq or a payment gateway.')}</span></div>
     <h2 class="h2">${tx('الطلب الحالي','Current order')}</h2>
     ${ao ? `<button class="btn line sm" data-a="openOrderFromDemo" data-v="${ao.id}" style="width:100%">${tx('افتح الطلب وأدوات المحاكاة','Open order & demo controls')} · ${esc(ao.id)}</button>`
-      : `<p class="small muted" style="margin:0">${tx('احجز استلاماً أولاً، ثم استخدم أدوات العرض في صفحة الطلب.','Book a pickup first, then use the demo controls on the order page.')}</p>`}
+      : `<p class="small muted" style="margin:0">${tx('اضغط ＋ لإنشاء طلب، ثم استخدم أدوات العرض في صفحة الطلب.','Tap ＋ to create an order, then use the demo controls on the order page.')}</p>`}
+    <h2 class="h2">${tx('قنوات الدعم للتجربة','Support channels for testing')}</h2>
+    <p class="small muted" style="margin:-4px 0 8px">${tx('لم تُعتمد قنوات دعم بعد. للتجربة فقط، أدخل رقمك أو بريدك — تُحفظ على هذا الجهاز ولا تُنشر.','No support channels are approved yet. To test, enter your own number or email — saved on this device only, never published.')}</p>
+    <div class="field"><label for="sup-wa">${tx('رقم واتساب مع رمز الدولة','WhatsApp number with country code')}</label><input id="sup-wa" class="inp" data-sup="whatsapp" inputmode="tel" dir="ltr" placeholder="9665XXXXXXXX" value="${esc(G.supportTest.whatsapp)}"></div>
+    <div class="field" style="margin-top:10px"><label for="sup-mail">${tx('البريد الإلكتروني','Email')}</label><input id="sup-mail" class="inp" data-sup="email" inputmode="email" dir="ltr" placeholder="name@example.com" value="${esc(G.supportTest.email)}"></div>
+    <div class="row" style="gap:8px;margin-top:10px"><button class="btn sm" style="flex:1" data-a="supSave" id="sup-save">${tx('حفظ للتجربة','Save for testing')}</button><button class="btn line sm" style="flex:1" data-a="supClear">${tx('مسح','Clear')}</button></div>
     <h2 class="h2">${tx('الضريبة','Tax')}</h2>
     <p class="small muted" style="margin:-4px 0 8px">${tx('شمول الضريبة غير مؤكد. يُطبَّق الخيار على الفواتير الجديدة فقط.','VAT inclusion is unconfirmed. The option applies to new bills only.')}</p>
     <div class="chips">${TAX_MODES.map(m=>`<button class="chip ${S.demo.tax===m.v?'on':''}" data-a="taxMode" data-v="${m.v}">${nm(m)}</button>`).join('')}</div>
     <h2 class="h2">${tx('المظهر','Appearance')}</h2>
-    ${tg('solid', tx('تقليل الشفافية','Reduce transparency'), tx('يعرض البديل المعتم للزجاج','Shows the opaque fallback for glass'))}
+    ${tg('solid', tx('تقليل الشفافية','Reduce transparency'), tx('يعرض البديل المعتم للزجاج','Shows the opaque fallback for glass'), G.solid)}
     <h2 class="h2">${tx('محاكاة الحالات','Simulate states')}</h2>
-    ${tg('failSlots', tx('فشل تحميل المواعيد','Slot loading fails'), tx('لعرض حالة الخطأ في خطوة الموعد','Shows the error state on the time step'))}
-    ${tg('failSubmit', tx('فشل إرسال الحجز','Booking submit fails'), tx('لعرض الخطأ مع الحفاظ على البيانات','Shows the error while keeping data'))}
+    ${tg('failSlots', tx('فشل تحميل المواعيد','Slot loading fails'), tx('لعرض حالة الخطأ في خطوة الموعد','Shows the error state on the time step'), S.demo.failSlots)}
+    ${tg('failSubmit', tx('فشل إرسال الحجز','Booking submit fails'), tx('لعرض الخطأ مع الحفاظ على البيانات','Shows the error while keeping data'), S.demo.failSubmit)}
     <h2 class="h2">${tx('قائمة الأسعار','Price catalogue')}</h2>
-    <p class="small ${chk.ok?'':'muted'}" style="margin:0;color:${chk.ok?'var(--ok)':'var(--err)'}">${chk.ok?'✓':'✗'} ${chk.total} ${tx('صنف','entries')} (${Object.entries(chk.counts).map(([k,v])=>`${k}:${v}`).join(' · ')}) · ${chk.assess} ${tx('بالتقييم','on assessment')}</p>
+    <p class="small" style="margin:0;color:${chk.ok?'var(--ok)':'var(--err)'}">${chk.ok?'✓':'✗'} ${chk.total} ${tx('صنف','entries')} (${Object.entries(chk.counts).map(([k,v])=>`${k}:${v}`).join(' · ')}) · ${chk.assess} ${tx('بالتقييم','on assessment')}</p>
     <h2 class="h2">${tx('مقاس الجهاز (على الكمبيوتر)','Device size (desktop preview)')}</h2>
-    <div class="chips">${FRAMES.map(f=>`<button class="chip ${S.demo.frame===f.id?'on':''}" data-a="frame" data-v="${f.id}">${f.name}</button>`).join('')}</div>
-    <button class="btn line sm" data-a="reset" style="margin-top:20px;width:100%;color:var(--err)">${tx('إعادة ضبط كل البيانات التجريبية','Reset all demo data')}</button>`);
+    <div class="chips">${FRAMES.map(f=>`<button class="chip ${G.frame===f.id?'on':''}" data-a="frame" data-v="${f.id}">${f.name}</button>`).join('')}</div>
+    <button class="btn line sm" data-a="resetAll" style="margin-top:20px;width:100%;color:var(--err)">${tx('حذف كل الحسابات التجريبية على هذا الجهاز','Delete all demo accounts on this device')}</button>`);
 }
 
 // ==== RENDER ====================================================================
-function screenKey(){ return S.view === 'tab' ? 'tab:' + S.tab : S.view === 'book' ? 'book:' + S.step : S.view === 'order' ? 'order:' + S.orderId : S.view }
+function screenKey(){
+  if (!S || !S.profile.name) return 'auth:' + T.auth.step;
+  return S.view === 'tab' ? 'tab:' + S.tab : S.view === 'book' ? 'book:' + S.step : S.view === 'order' ? 'order:' + S.orderId : S.view;
+}
 function render(){
-  document.documentElement.lang = S.lang;
+  document.documentElement.lang = G.lang;
   document.documentElement.dir = ar() ? 'rtl' : 'ltr';
-  document.documentElement.classList.toggle('solid', !!S.demo.solid);
+  document.documentElement.classList.toggle('solid', !!G.solid);
   document.title = tx('ذا كلينر','The Cleaner');
   const key = screenKey(), same = key === T.lastKey;
   const sc = document.querySelector('#app .scroll');
   if (sc && T.lastKey) T.scrollMem[T.lastKey] = sc.scrollTop;
   const app = document.getElementById('app');
-  const views = { book:vBook, success:vSuccess, order:vOrder, prices:vPrices, invoices:vInvoices, invoice:vInvoice };
+  if (!S || !S.profile.name) {
+    if (S && !S.profile.name && T.auth.step !== 'name') T.auth.step = 'name';
+    app.innerHTML = vAuth(); T.lastKey = key; renderSheet(); updateStatusBar(); save(); return;
+  }
   if (S.view === 'tab' && S.tab === 'packages' && !FEATURES.packages) S.tab = 'home';
+  const views = { book:vBook, success:vSuccess, order:vOrder, prices:vPrices, invoices:vInvoices, invoice:vInvoice, wallet:vWallet };
   app.innerHTML = S.view === 'tab' ? ({home:vHome, orders:vOrders, packages:vPackages, account:vAccount}[S.tab])() : views[S.view]();
   const scr = app.firstElementChild;
-  if (!same && T.lastKey) scr.classList.add(S.view === 'tab' && T.lastKey.startsWith('tab:') ? 'enter-u' : T.navDir === 'b' ? 'enter-b' : 'enter-f');
+  if (!same && T.lastKey) scr.classList.add(T.navDir === 'u' ? 'enter-up' : S.view === 'tab' && T.lastKey.startsWith('tab:') ? 'enter-u' : T.navDir === 'b' ? 'enter-b' : 'enter-f');
   const nsc = app.querySelector('.scroll');
   if (nsc) nsc.scrollTop = same ? (T.scrollMem[key] || 0) : 0;
   T.lastKey = key;
+  // capsule indicator slides from the previous tab to the current one
+  const ind = app.querySelector('.ind');
+  if (ind) { const to = ind.dataset.to; requestAnimationFrame(() => requestAnimationFrame(() => ind.style.setProperty('--i', to))); T.navIdx = Number(to) }
   updateStatusBar();
   renderSheet();
   save();
@@ -1518,19 +1833,20 @@ function updateStatusBar(){
 function renderSheet(){
   const root = document.getElementById('sheet-root');
   const keepScroll = root.querySelector('.sheet-b')?.scrollTop;
-  const map = {pickAddr:shPickAddr, addr:shAddr, prefs:shPrefs, demo:shDemo, pay:shPay, driver:shDriver, rate:shRate};
+  const map = {pickAddr:shPickAddr, addr:shAddr, prefs:shPrefs, demo:shDemo, pay:shPay, driver:shDriver, rate:shRate, help:shHelp, topup:shTopup, comp:shComp, signout:shSignout};
   const wasOpen = !!root.firstChild;
-  root.innerHTML = T.sheet ? map[T.sheet]() : '';
-  if (T.sheet && wasOpen) { root.querySelector('.overlay').style.animation = 'none'; root.querySelector('.sheet').style.animation = 'none';
+  root.innerHTML = T.sheet && S ? map[T.sheet]() : '';
+  if (T.sheet && wasOpen && root.firstChild) { root.querySelector('.overlay').style.animation = 'none'; root.querySelector('.sheet').style.animation = 'none';
     if (keepScroll) root.querySelector('.sheet-b').scrollTop = keepScroll; }
   if (T.sheet) document.getElementById('sbar').classList.remove('on-hero');
 }
 function openSheet(n){ T.sheet = n; document.getElementById('sheet-root').innerHTML = ''; renderSheet() }
 function closeSheet(){
-  if (T.sheet === 'pay' && T.pay?.state === 'processing') return;      // cannot close mid-payment
-  const wasPay = T.sheet === 'pay' && T.pay?.state === 'success';
-  T.sheet = null; T.errors = {}; T.pay = null; T.driver = null; T.rate = null; renderSheet(); updateStatusBar();
-  if (wasPay) render();
+  if (T.sheet === 'pay' && T.pay?.state === 'processing') return;
+  if (T.sheet === 'topup' && T.topup?.state === 'processing') return;
+  const rerender = (T.sheet === 'pay' && T.pay?.state === 'success') || T.sheet === 'topup';
+  T.sheet = null; T.errors = {}; T.pay = null; T.driver = null; T.rate = null; T.help = null; T.topup = null; T.comp = null;
+  renderSheet(); updateStatusBar(); if (rerender) render();
 }
 
 // ==== BOOKING LOGIC ==============================================================
@@ -1565,7 +1881,7 @@ function goStep(n, dir){
   S.step = n; T.errors = {};
   if (n === 2) {
     const d = S.draft;
-    if (!d.addressId) d.addressId = S.currentAddressId;
+    if (!d.addressId && S.currentAddressId) d.addressId = S.currentAddressId;
     if (!d.date) d.date = ymd(new Date(Date.now() + 864e5));
     if (T.slots.key !== d.date || T.slots.error) loadSlots(d.date);
   }
@@ -1591,9 +1907,7 @@ function submit(){
   }, 1300);
 }
 
-// ==== ORDER / PAYMENT LOGIC =======================================================
-// Progress rule: cleaning may continue while unpaid, but nothing moves to
-// "out for delivery" until the order is paid.
+// ==== ORDER / PAYMENT / WALLET LOGIC ===============================================
 function canAdvance(o){
   if (o.status >= DELIVERED) return { ok:false };
   if (!o.bill && o.payment !== 'legacy') return { ok:false, reason:'nobill' };
@@ -1614,30 +1928,86 @@ function startPay(orderId){
   if (!o || !o.bill) return;
   if (o.payment === 'paid') { toast(tx('هذا الطلب مدفوع مسبقاً','This order is already paid'), 'info'); return }
   if (T.pay && T.pay.state === 'processing') return;
-  T.pay = { orderId, method:'apple', outcome:'success', state:'idle' }; openSheet('pay');
+  T.pay = { orderId, method:'apple', outcome:'success', state:'idle', useWallet: walletBal().total > 0 }; openSheet('pay');
 }
 function confirmPay(){
-  const P_ = T.pay; if (!P_ || P_.state === 'processing') return;          // duplicate tap guard
+  const P_ = T.pay; if (!P_ || P_.state === 'processing') return;           // duplicate-tap guard
   const o = orderById(P_.orderId);
   if (!o || o.payment === 'paid') { closeSheet(); toast(tx('هذا الطلب مدفوع مسبقاً','This order is already paid'), 'info'); return }
-  P_.state = 'processing'; P_.attemptId = 'pay_' + Date.now(); renderSheet();
+  const plan = payPlan(P_, o);
+  P_.state = 'processing'; P_.attemptId = 'pay_' + Date.now().toString(36); renderSheet();
   setTimeout(() => {
     if (T.pay !== P_) return;
-    const ok = P_.outcome === 'success';
+    // Wallet funds are only debited after the external part succeeds — a failed split never deducts the wallet.
+    let ok = plan.ext === 0 ? true : P_.outcome === 'success';
+    if (ok && plan.walletPart) ok = walletDebit(plan.walletPart, P_.attemptId, o.id);
     o.payments = o.payments || [];
-    o.payments.push({ id:P_.attemptId, method:P_.method, amount:o.bill.total, status: ok ? 'succeeded' : 'failed', at:Date.now() });
-    if (ok) { o.payment = 'paid'; P_.state = 'success' } else P_.state = 'failed';
+    o.payments.push({ id:P_.attemptId, method: plan.ext === 0 ? 'wallet' : P_.method, walletAmount:plan.walletPart, externalAmount:plan.ext,
+      amount:o.bill.total, status: ok ? 'succeeded' : 'failed', at:Date.now() });
+    if (ok) { o.payment = 'paid'; P_.state = 'success'; P_.done = plan } else P_.state = 'failed';
     save(); renderSheet(); render();
     if (!ok) toast(tx('ما تمت عملية الدفع (محاكاة)','Payment didn’t go through (simulated)'), 'err');
   }, 1400);
 }
+function confirmTopup(){
+  const P_ = T.topup; if (!P_ || P_.state === 'processing') return;
+  const amount = P_.custom !== '' ? Math.round(parseFloat(P_.custom.replace(/[^\d.]/g,'')) * 100) : P_.amount;
+  if (!(amount >= WALLET_CFG.min && amount <= WALLET_CFG.max)) { T.errors.topup = 1; renderSheet(); return }
+  delete T.errors.topup;
+  P_.state = 'processing'; P_.ref = 'top_' + Date.now().toString(36); renderSheet();
+  setTimeout(() => {
+    if (T.topup !== P_) return;
+    if (P_.outcome === 'success') { postTx({ kind:'topup', bucket:'funded', amount, method:P_.method, ref:P_.ref }); P_.state = 'success'; P_.done = amount }
+    else { S.wallet.tx.push({ id:'wt_' + Date.now().toString(36), kind:'topup', bucket:'funded', amount, method:P_.method, ref:P_.ref, status:'failed', at:Date.now() }); P_.state = 'failed' }
+    save(); renderSheet(); if (S.view === 'wallet') render();
+  }, 1200);
+}
 
 // ==== ACTIONS ======================================================================
 const A = {
+  // auth
+  authStart(){ T.auth = { ...T.auth, step:'phone', err:null }; T.navDir = 'f'; render(); setTimeout(() => document.getElementById('ph')?.focus(), 350) },
+  authBack(){ const st = T.auth.step; T.auth.err = null; T.auth.step = st === 'otp' ? 'phone' : 'welcome'; T.navDir = 'b'; render() },
+  authPhone(){
+    const A_ = T.auth; if (A_.busy) return;
+    const p = normPhone(A_.phone);
+    if (!p) { A_.err = tx('أدخل رقم جوال سعودي صحيح يبدأ بـ 5 (مثال: 5X XXX XXXX)','Enter a valid Saudi mobile number starting with 5 (e.g. 5X XXX XXXX)'); render(); return }
+    A_.busy = true; A_.err = null; render();
+    setTimeout(() => { A_.busy = false; A_.phone = p; A_.code = newCode(); A_.entered = ''; A_.resendAt = Date.now() + 30000; A_.step = 'otp'; T.navDir = 'f'; render();
+      setTimeout(() => document.getElementById('otp')?.focus(), 350); tickResend() }, 600);
+  },
+  authResend(){ const A_ = T.auth; if (Date.now() < A_.resendAt) return; A_.code = newCode(); A_.entered = ''; A_.err = null; A_.resendAt = Date.now() + 30000; render(); toast(tx('رمز تجريبي جديد — لم تُرسل رسالة SMS','New demo code — no SMS was sent'), 'info'); tickResend() },
+  authVerify(){
+    const A_ = T.auth; if (A_.busy) return;
+    if (A_.entered.trim() !== A_.code) { A_.err = tx('الرمز غير صحيح، حاول مرة ثانية.','That code isn’t right — try again.'); render(); return }
+    A_.busy = true; render();
+    setTimeout(() => {
+      A_.busy = false; A_.err = null;
+      const existing = loadJSON(USER_PREFIX + A_.phone);
+      G.phone = A_.phone;
+      if (existing && existing.profile?.name) { S = existing; S.view = 'tab'; S.tab = 'home'; S.draft = {...newDraft(S.prefs), ...S.draft}; S.wallet = S.wallet || {tx:[], offers:[]};
+        T.lastKey = ''; T.navIdx = null; render(); toast(tx(`أهلاً بعودتك، ${S.profile.name}`,`Welcome back, ${S.profile.name}`)) }
+      else { S = existing || adoptV3(newUser(A_.phone)); A_.step = 'name'; A_.name = ''; T.navDir = 'f'; render(); setTimeout(() => document.getElementById('nm')?.focus(), 350) }
+    }, 600);
+  },
+  authName(){
+    const A_ = T.auth, n = A_.name.trim();
+    if (n.length < 2) { A_.err = tx('اكتب اسمك (حرفين على الأقل)','Please enter your name (at least 2 characters)'); render(); return }
+    S.profile.name = n; A_.err = null; S.view = 'tab'; S.tab = 'home'; T.lastKey = ''; T.navIdx = null; render();
+  },
+  signOut(){ T.sheet = null; renderSheet(); save(); G.phone = null; S = null; T.auth = { step:'welcome', phone:'', code:null, entered:'', err:null, resendAt:0, busy:false, name:'' };
+    T.navIdx = null; T.lastKey = ''; render(); toast(tx('تم تسجيل الخروج','Signed out'), 'info') },
+  // navigation
   tab(v){ if (v === 'packages' && !FEATURES.packages) v = 'home'; S.view = 'tab'; S.tab = v; render() },
+  createOrder(){
+    if (T.navBusy || S.view === 'book') return;                       // repeated taps never open a second flow
+    T.navBusy = true; setTimeout(() => T.navBusy = false, 650);
+    if (!S.draft.touched) S.draft = newDraft(S.prefs);
+    S.draft.touched = true; S.view = 'book'; S.step = 1; S.fromReview = false; T.submitError = false; T.errors = {}; T.navDir = 'u'; render();
+  },
   seg(v){ S.ordersSeg = v; render() },
   invSeg(v){ S.invSeg = v; render() },
-  lang(){ S.lang = ar() ? 'en' : 'ar'; T.lastKey = ''; render(); toast(tx('تم التبديل إلى العربية','Switched to English')) },
+  lang(){ G.lang = ar() ? 'en' : 'ar'; T.lastKey = ''; render(); toast(tx('تم التبديل إلى العربية','Switched to English')) },
   soon(){ toast(tx('تُضاف هذه الميزة في المرحلة التالية','This feature comes in the next phase'), 'info') },
   sheet(v){ openSheet(v) },
   closeSheet(v){ if (v === 'prefsSaved') toast(tx('تم حفظ تفضيلاتك','Preferences saved')); closeSheet() },
@@ -1649,7 +2019,7 @@ const A = {
     S.step = 1; T.navDir = 'f'; T.errors = {}; render();
   },
   resume(){ S.view = 'book'; T.navDir = 'f'; if (S.step === 2) goStep(2); else render() },
-  exitBook(){ S.view = 'tab'; S.tab = 'home'; T.navDir = 'b'; T.errors = {}; render(); toast(tx('حفظنا حجزك تكمله بعدين','We saved your booking for later'), 'info') },
+  exitBook(){ S.view = 'tab'; T.navDir = 'b'; T.errors = {}; render(); toast(tx('حفظنا حجزك تكمله بعدين','We saved your booking for later'), 'info') },
   back(){
     if (S.fromReview) { S.fromReview = false; goStep(3, 'b'); return }
     if (S.step === 1) { A.exitBook(); return }
@@ -1685,6 +2055,7 @@ const A = {
     if (Object.keys(e).length) { renderSheet(); const el = document.querySelector('.sheet .has-err'); el?.classList.add('shake'); el?.querySelector('input')?.focus(); return }
     const a = {id:'a' + Date.now(), ...Object.fromEntries(Object.entries(f).map(([k,v]) => [k, v.trim()]))};
     S.addresses.push(a);
+    if (!S.currentAddressId) S.currentAddressId = a.id;
     if (S.view === 'book') { S.draft.addressId = a.id; delete T.errors.address } else S.currentAddressId = a.id;
     T.sheet = null; T.errors = {}; renderSheet(); render(); toast(tx('تمت إضافة العنوان','Address added'));
   },
@@ -1696,15 +2067,47 @@ const A = {
   openPrices(){ S.view = 'prices'; T.navDir = 'f'; render() },
   openInvoices(){ S.view = 'invoices'; T.navDir = 'f'; render() },
   openInvoice(v){ S.invoiceId = v; S.view = 'invoice'; T.navDir = 'f'; render() },
-  viewBack(){ T.navDir = 'b'; if (S.view === 'invoice') S.view = 'invoices'; else { S.view = 'tab'; S.tab = 'account' } render() },
+  openWallet(){ T.sheet = null; renderSheet(); S.walletBack = S.view === 'order' ? S.orderId : null; S.view = 'wallet'; T.navDir = 'f'; render() },
+  viewBack(){ T.navDir = 'b';
+    if (S.view === 'invoice') S.view = 'invoices';
+    else if (S.view === 'wallet' && S.walletBack) { S.view = 'order'; S.orderId = S.walletBack; S.walletBack = null }
+    else { S.view = 'tab'; S.tab = 'account' } render() },
   plCat(v){ T.plCat = v; document.querySelectorAll('.cat-chips .chip').forEach(c => { c.classList.toggle('on', c.dataset.v === v); c.setAttribute('aria-selected', c.dataset.v === v) }); document.getElementById('pl-list').innerHTML = priceListHtml(); document.getElementById('pl-scroll').scrollTop = 0 },
   // payment
   pay(v){ startPay(v) },
   payMethod(v){ if (T.pay.state === 'processing') return; T.pay.method = v; renderSheet() },
   payOutcome(v){ if (T.pay.state === 'processing') return; T.pay.outcome = v; renderSheet() },
+  payWallet(){ if (T.pay.state === 'processing') return; T.pay.useWallet = !T.pay.useWallet; renderSheet() },
   payConfirm(){ confirmPay() },
   paySuccessDone(){ const id = T.pay.orderId; T.sheet = null; T.pay = null; renderSheet(); S.orderId = id; S.view = 'order'; T.lastKey = ''; render() },
-  // demo driver
+  // wallet
+  topupOpen(){ T.topup = { amount:WALLET_CFG.topups[1], custom:'', method:'apple', outcome:'success', state:'idle' }; T.errors = {}; openSheet('topup') },
+  topupAmt(v){ if (T.topup.state === 'processing') return; T.topup.amount = +v; T.topup.custom = ''; delete T.errors.topup; renderSheet() },
+  topupMethod(v){ if (T.topup.state === 'processing') return; T.topup.method = v; renderSheet() },
+  topupOutcome(v){ if (T.topup.state === 'processing') return; T.topup.outcome = v; renderSheet() },
+  topupConfirm(){ confirmTopup() },
+  compOpen(v){ T.comp = { orderId: v || null, amount:WALLET_CFG.comp[1], reason:'delay' }; openSheet('comp') },
+  compAmt(v){ T.comp.amount = +v; renderSheet() },
+  compReason(v){ T.comp.reason = v; renderSheet() },
+  compSend(){ const C = T.comp; if (!C || C.sent) return; C.sent = true;
+    S.wallet.offers.push({ id:'co_' + Date.now().toString(36), orderId:C.orderId, amount:C.amount, reason:C.reason, status:'pending', at:Date.now() });
+    closeSheet(); save(); render(); toast(tx('وصل عرض تعويض تجريبي للعميل','A demo compensation offer was sent to the customer')) },
+  offerAccept(v){ const o = S.wallet.offers.find(x => x.id === v); if (!o || o.status !== 'pending') return;
+    o.status = 'accepted'; o.decidedAt = Date.now();
+    postTx({ kind:'compensation', bucket:'comp', amount:o.amount, orderId:o.orderId, ref:o.id });
+    save(); render(); toast(tx(`أُضيف ${moneyTxt(o.amount)} لمحفظتك`,`${moneyTxt(o.amount)} added to your wallet`)) },
+  offerDecline(v){ const o = S.wallet.offers.find(x => x.id === v); if (!o || o.status !== 'pending') return; o.status = 'declined'; o.decidedAt = Date.now(); save(); render() },
+  // order help
+  helpOpen(v){ T.help = { orderId:v, reason:null, details:'', opened:null }; openSheet('help') },
+  helpReason(v){ T.help.reason = v; T.help.opened = null; renderSheet() },
+  helpOpened(v){ T.help.opened = v; setTimeout(renderSheet, 300) },   // composer opened — the customer still has to send it
+  helpCopy(){ const L = helpLinks(); navigator.clipboard?.writeText(L.msg).then(() => toast(tx('نُسخت الرسالة','Message copied')), () => toast(tx('ما قدرنا ننسخ الرسالة','Couldn’t copy the message'), 'err')) },
+  supSave(){ const wa = document.getElementById('sup-wa').value.replace(/\D/g,''), em = document.getElementById('sup-mail').value.trim();
+    if (wa && !/^\d{8,15}$/.test(wa)) { toast(tx('رقم واتساب غير صحيح — أدخله مع رمز الدولة','Invalid WhatsApp number — include the country code'), 'err'); return }
+    if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) { toast(tx('البريد الإلكتروني غير صحيح','Invalid email address'), 'err'); return }
+    G.supportTest = { whatsapp:wa, email:em }; save(); renderSheet(); render(); toast(tx('حُفظت قنوات التجربة على هذا الجهاز','Test channels saved on this device')) },
+  supClear(){ G.supportTest = { whatsapp:'', email:'' }; save(); renderSheet(); render() },
+  // demo driver & progress
   driverOpen(v){ const o = orderById(v); T.driver = { orderId:v, lines: sampleEntries(o.services) }; T.errors = {}; openSheet('driver') },
   drvQty(v){ const [id, n] = v.split(':'); const l = T.driver.lines.find(x => x.id === id); if (!l) return; l.qty += +n; if (l.qty <= 0) T.driver.lines = T.driver.lines.filter(x => x !== l); renderSheet() },
   drvAdd(){ const id = document.getElementById('drv-add').value; const l = T.driver.lines.find(x => x.id === id); l ? l.qty++ : T.driver.lines.push({ id, qty:1 }); delete T.errors.driver; renderSheet() },
@@ -1720,10 +2123,17 @@ const A = {
   rateSet(v){ T.rate.n = +v; renderSheet() },
   rateSubmit(){ const o = orderById(T.rate.orderId); o.rating = T.rate.n; closeSheet(); render(); toast(tx('شكراً لتقييمك','Thanks for your rating')) },
   taxMode(v){ S.demo.tax = v; save(); renderSheet() },
-  demo(v){ S.demo[v] = !S.demo[v]; save(); document.documentElement.classList.toggle('solid', !!S.demo.solid); renderSheet() },
-  frame(v){ S.demo.frame = v; applyFrame(); save(); renderSheet() },
-  reset(){ const frame = S.demo.frame, lang = S.lang; S = initialState(); S.demo.frame = frame; S.lang = lang; T.sheet = null; T.pay = null; T.driver = null; T.slots = {key:null}; T.lastKey = ''; render(); toast(tx('تمت إعادة الضبط','Demo data reset')) }
+  demo(v){ if (v === 'solid') G.solid = !G.solid; else S.demo[v] = !S.demo[v]; save(); document.documentElement.classList.toggle('solid', !!G.solid); renderSheet() },
+  frame(v){ G.frame = v; applyFrame(); save(); renderSheet() },
+  resetAll(){ Object.keys(localStorage).filter(k => k.startsWith('thecleaner-proto-v5')).forEach(k => localStorage.removeItem(k));
+    const lang = G.lang, frame = G.frame; G = { lang, phone:null, frame, solid:false, v3Adopted:true, supportTest:{whatsapp:'', email:''} }; S = null;
+    T.sheet = null; T.auth = { step:'welcome', phone:'', code:null, entered:'', err:null, resendAt:0, busy:false, name:'' }; T.lastKey = ''; render(); toast(tx('حُذفت الحسابات التجريبية','Demo accounts deleted')) }
 };
+function tickResend(){ clearTimeout(T.resendTimer); if (T.auth.step !== 'otp') return;
+  const el = document.getElementById('resend-wait');
+  if (Date.now() >= T.auth.resendAt) { if (el) render(); return }
+  if (el) el.querySelector('.num').textContent = `0:${String(Math.ceil((T.auth.resendAt - Date.now())/1000)).padStart(2,'0')}`;
+  T.resendTimer = setTimeout(tickResend, 1000) }
 
 const device = document.getElementById('device');
 device.addEventListener('click', ev => {
@@ -1735,8 +2145,19 @@ device.addEventListener('click', ev => {
 device.addEventListener('input', ev => {
   const t = ev.target;
   if (t.dataset.bind) { S.draft[t.dataset.bind] = t.value; if (t.dataset.bind === 'notes') { const c = document.getElementById('notes-count'); if (c) c.textContent = `${t.value.length}/300` } save() }
+  if (t.dataset.auth) { const A_ = T.auth; if (t.dataset.auth === 'phone') A_.phone = t.value; if (t.dataset.auth === 'otp') { A_.entered = t.value.replace(/\D/g,'').slice(0,4); if (t.value !== A_.entered) t.value = A_.entered } if (t.dataset.auth === 'name') A_.name = t.value;
+    if (A_.err) { A_.err = null; t.closest('.field')?.classList.remove('has-err'); t.closest('.field')?.querySelector('.err-msg')?.remove() } }
   if (t.dataset.plq) { T.plQuery = t.value; document.getElementById('pl-list').innerHTML = priceListHtml() }
+  if (t.dataset.help && T.help) { T.help.details = t.value; const L = helpLinks(); const pv = document.getElementById('help-preview'); if (pv) pv.textContent = L.msg;
+    const wa = document.getElementById('help-wa'), ml = document.getElementById('help-mail'); if (wa && L.wa) wa.href = L.wa; if (ml && L.mail) ml.href = L.mail }
+  if (t.dataset.topup && T.topup) { T.topup.custom = t.value; const b = document.getElementById('topup-confirm'); const a = Math.round(parseFloat(t.value.replace(/[^\d.]/g,'')) * 100);
+    if (b) b.textContent = tx('اشحن','Top up') + (a > 0 ? ' · ' + moneyTxt(a) : '');
+    document.querySelectorAll('[data-a=topupAmt]').forEach(c => c.classList.toggle('on', t.value === '' && +c.dataset.v === T.topup.amount)) }
   if (t.dataset.form && T.addrForm) { T.addrForm[t.dataset.form] = t.value; if (T.errors[t.dataset.form] && t.value.trim()) { delete T.errors[t.dataset.form]; t.closest('.field').classList.remove('has-err'); t.closest('.field').querySelector('.err-msg')?.remove() } }
+});
+device.addEventListener('keydown', ev => {
+  if (ev.key !== 'Enter' || !ev.target.dataset?.auth) return;
+  ev.preventDefault(); ({ phone:A.authPhone, otp:A.authVerify, name:A.authName })[ev.target.dataset.auth]?.();
 });
 device.addEventListener('focusin', ev => {
   if (ev.target.matches('textarea,input:not([type=search])')) setTimeout(() => ev.target.scrollIntoView({block:'center', behavior:'smooth'}), 300);
@@ -1748,7 +2169,7 @@ if (location.hash === '#iphone') document.documentElement.classList.add('sim');
 if (location.hash === '#iphone-se') document.documentElement.classList.add('sim','se');
 const framed = () => matchMedia('(min-width:600px) and (min-height:640px)').matches;
 function applyFrame(){
-  const f = FRAMES.find(x => x.id === S.demo.frame) || FRAMES[1], st = device.style;
+  const f = FRAMES.find(x => x.id === G.frame) || FRAMES[1], st = device.style;
   st.setProperty('--fw', f.w + 'px'); st.setProperty('--fh', f.h + 'px');
   st.setProperty('--fsat', f.sat + 'px'); st.setProperty('--fsab', f.sab + 'px'); st.setProperty('--frad', (f.rad || 6) + 'px');
   st.setProperty('--fscale', Math.min(1, (innerHeight - 48) / f.h, (innerWidth - 48) / f.w));
@@ -1767,9 +2188,9 @@ window.visualViewport?.addEventListener('scroll', fitViewport);
 addEventListener('resize', fitViewport);
 fitViewport();
 
-if (S.view === 'book' && S.step === 2 && S.draft.date) loadSlots(S.draft.date);
-if ((S.view === 'success' || S.view === 'order') && !orderById(S.orderId)) S.view = 'tab';
-if (S.view === 'invoice' && !orderById(S.invoiceId)) S.view = 'invoices';
+if (S && S.view === 'book' && S.step === 2 && S.draft.date) loadSlots(S.draft.date);
+if (S && (S.view === 'success' || S.view === 'order') && !orderById(S.orderId)) S.view = 'tab';
+if (S && S.view === 'invoice' && !orderById(S.invoiceId)) S.view = 'invoices';
 render();
 </script>
 </body>
